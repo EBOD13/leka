@@ -3,9 +3,10 @@
 #define ORDER_SIDE_HPP
 
 namespace lob {
-enum class SIDE {
+enum class OrderSide {
     BUY,
     SELL
 };
 } // namespace lob
+
 #endif
