@@ -26,12 +26,15 @@ class OrderBook {
 						OrderType orderType, SequenceNumber sequenceNumber);
 
 		bool cancelOrder(const OrderId& orderId); // Cancel an order by its OrderId
+		void removeOrder(Order* order);
 
         // Find an order by its OrderId
 		Order* findOrder(const OrderId& orderId);
 		const Order* findOrder(const OrderId& orderId) const;
         
         // Get the best bid and ask price levels
+		PriceLevel* getBestBid();
+		PriceLevel* getBestAsk();
 		const PriceLevel* getBestBid() const;
 		const PriceLevel* getBestAsk() const;
         
