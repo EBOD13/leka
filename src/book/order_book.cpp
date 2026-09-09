@@ -7,14 +7,17 @@ namespace lob {
 Order* OrderBook::addOrder(OrderId orderId, Price price, Quantity quantity,
 						   Timestamp timestamp, OrderSide orderSide,
 						   OrderType orderType, SequenceNumber sequenceNumber) {
+	if (orderType == OrderType::MARKET) {
+		throw std::invalid_argument("OrderBook accepts resting limit orders only");
+	}
 	if (orderIndex.findOrder(orderId) != nullptr) {
 		throw std::logic_error("Order with the same OrderId already exists in the book");
 	}
 
 	Order* order = orderPool.allocate(orderId, price, quantity, timestamp,
 									  orderSide, orderType, sequenceNumber);
-	bool indexed = false;
 	bool levelCreated = false;
+	bool addedToLevel = false;
 	PriceLevels* levels = nullptr;
 	PriceLevels::iterator levelIterator;
 
@@ -23,20 +26,20 @@ Order* OrderBook::addOrder(OrderId orderId, Price price, Quantity quantity,
 			throw std::invalid_argument("Cannot add an invalid order");
 		}
 
-		orderIndex.addOrder(order);
-		indexed = true;
-
 		levels = order->isBuy() ? &bids : &asks;
-		auto result = levels->try_emplace(price, price);
+		auto result = levels->try_emplace(order->getPrice(), order->getPrice());
 		levelIterator = result.first;
 		levelCreated = result.second;
 		levelIterator->second.addOrder(order);
+		addedToLevel = true;
+
+		orderIndex.addOrder(order);
 	} catch (...) {
-		if (levelCreated) {
-			levels->erase(levelIterator);
+		if (addedToLevel) {
+			levelIterator->second.removeOrder(order);
 		}
-		if (indexed) {
-			orderIndex.removeOrder(order);
+		if (levelCreated && levelIterator->second.isEmpty()) {
+			levels->erase(levelIterator);
 		}
 		orderPool.release(order);
 		throw;
