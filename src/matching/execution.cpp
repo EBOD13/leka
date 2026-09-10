@@ -2,6 +2,7 @@
 #include "lob/matching/execution.hpp"
 
 namespace lob {
+    /** Records one execution between an incoming and resting order. */
     Execution::Execution(OrderId incomingOrderId, OrderId restingOrderId, Price executionPrice, Quantity executionQuantity)
         : incomingOrderId(incomingOrderId), restingOrderId(restingOrderId), executionPrice(executionPrice), executionQuantity(executionQuantity) {}
 
@@ -21,6 +22,7 @@ namespace lob {
         return executionQuantity;
     }
 
+    /** Checks that all execution identifiers, price, and quantity are valid. */
     bool Execution::isValid() const {
         return incomingOrderId.isValid() && restingOrderId.isValid() && executionPrice.isValid() && executionQuantity.isValid();
     }

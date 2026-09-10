@@ -13,24 +13,45 @@
 
 namespace lob {
 
+/**
+ * @brief Provides stable, pooled storage for Order objects.
+ *
+ * Storage is allocated in fixed 64 KiB pages. Orders are constructed in
+ * place, never compacted, and released slots are reused without moving live
+ * orders.
+ */
 class OrderPool {
     public:
-        static constexpr std::size_t PageSize = 64 * 1024; // Define page size
-        static constexpr std::size_t SlotsPerPage = PageSize / sizeof(Order); // Define the number of slots per page based on the size of Order
+        static constexpr std::size_t PageSize = 64 * 1024;
+        static constexpr std::size_t SlotsPerPage = PageSize / sizeof(Order);
 
-        OrderPool(); // Default constructor
+        /** Creates an empty pool without allocating a page. */
+        OrderPool();
         OrderPool(OrderPool&&) = delete;
         OrderPool& operator=(OrderPool&&) = delete;
         OrderPool(const OrderPool&) = delete; // Delete copy constructor to prevent copying
         OrderPool& operator=(const OrderPool&) = delete; // Delete copy assignment operator to prevent copying
-        ~OrderPool(); // Destructor to clean up allocated pages
+        /** Destroys all live orders and releases every allocated page. */
+        ~OrderPool();
 
+        /**
+         * @brief Constructs an Order in a stable pool slot.
+         * @return A pointer owned by this pool until release() is called.
+         */
         Order* allocate(OrderId orderId, Price price, Quantity originalQuantity,
                         Timestamp timestamp, OrderSide orderSide,
                         OrderType orderType, SequenceNumber sequenceNumber);
-        void release(Order* order); // Release an order back to the pool
+        /** Constructs an Order with explicit original and remaining quantities. */
+        Order* allocate(OrderId orderId, Price price, Quantity originalQuantity,
+                Quantity remainingQuantity, Timestamp timestamp,
+                OrderSide orderSide, OrderType orderType,
+                SequenceNumber sequenceNumber);
+        /** Destroys an order and returns its slot to the free list. */
+        void release(Order* order);
 
+        /** Returns the number of allocated pages. */
         std::size_t getPageCount() const { return pages.size(); }
+        /** Returns the number of live orders in the pool. */
         std::size_t getLiveOrderCount() const { return liveOrderCount; }
 
     private:

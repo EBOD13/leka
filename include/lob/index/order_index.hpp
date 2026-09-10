@@ -7,18 +7,19 @@
 #include <unordered_map>
 
 namespace lob {
+/** @brief Provides average constant-time lookup from OrderId to Order*. */
 class OrderIndex {
     private:
         std::unordered_map<OrderId, Order*> orders; // Map to store orders by their OrderId
     
         public:
-        // Add an order to the index
+        /** Adds an order and rejects duplicate IDs. */
         void addOrder(Order* order);
 
-        // Remove an order from the index
+        /** Removes an order after verifying pointer identity. */
         void removeOrder(Order* order);
 
-        // Find an order by its OrderId
+        /** Finds an order by ID, or returns nullptr when absent. */
         Order* findOrder(const OrderId& orderId) const;
 };
 } // namespace lob

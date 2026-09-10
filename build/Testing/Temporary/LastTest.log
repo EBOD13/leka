@@ -1,0 +1,33 @@
+Start testing: Sep 10 15:30 CDT
+----------------------------------------------------------
+1/2 Testing: order_book
+1/2 Test: order_book
+Command: "/Users/ebod/Documents/projects/leka/build/test_order_book"
+Directory: /Users/ebod/Documents/projects/leka/build
+"order_book" start time: Sep 10 15:30 CDT
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.67 sec
+----------------------------------------------------------
+Test Passed.
+"order_book" end time: Sep 10 15:30 CDT
+"order_book" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/2 Testing: matching_engine
+2/2 Test: matching_engine
+Command: "/Users/ebod/Documents/projects/leka/build/test_matching_engine"
+Directory: /Users/ebod/Documents/projects/leka/build
+"matching_engine" start time: Sep 10 15:30 CDT
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.37 sec
+----------------------------------------------------------
+Test Passed.
+"matching_engine" end time: Sep 10 15:30 CDT
+"matching_engine" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 10 15:30 CDT

@@ -105,4 +105,13 @@ int main() {
 	assert(book.getAskLevelCount() == 0);
 	assert(book.getBestBid() == nullptr);
 	assert(book.getBestAsk() == nullptr);
+
+	lob::OrderBook remainderBook;
+	lob::Order* remainder = remainderBook.addRestingRemainder(
+		lob::OrderId{10}, lob::Price{105}, lob::Quantity{100},
+		lob::Quantity{60}, timestamp, lob::OrderSide::BUY,
+		lob::OrderType::LIMIT, lob::SequenceNumber{10});
+	assert(remainder->getOriginalQuantity().getQuantity() == 100);
+	assert(remainder->getRemainingQuantity().getQuantity() == 60);
+	assert(remainderBook.getBestBid()->getTotalQuantity().getQuantity() == 60);
 }

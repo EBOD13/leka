@@ -7,20 +7,27 @@
 #include "lob/types/order_id.hpp"
 
 namespace lob {
+/** @brief Describes one match between an incoming and resting order. */
     class Execution {
         private:
-            OrderId incomingOrderId; // The ID of the incoming order that triggered the execution
-            OrderId restingOrderId; // The ID of the resting order that was matched with the incoming order
-            Price executionPrice; // The price at which the execution occurred
-            Quantity executionQuantity; // The quantity of the order that was executed
+            OrderId incomingOrderId;
+            OrderId restingOrderId;
+            Price executionPrice;
+            Quantity executionQuantity;
         
         public:
+            /** Constructs an execution at the resting order's price. */
             Execution(OrderId incomingOrderId, OrderId restingOrderId, Price executionPrice, Quantity executionQuantity);
 
+            /** Returns the incoming order ID. */
             OrderId getIncomingOrderId() const;
+            /** Returns the resting order ID. */
             OrderId getRestingOrderId() const;
+            /** Returns the execution price. */
             Price getExecutionPrice() const;
+            /** Returns the executed quantity. */
             Quantity getExecutionQuantity() const;
+            /** Returns whether all execution fields are valid. */
             bool isValid() const; 
     };
 } // namespace lob

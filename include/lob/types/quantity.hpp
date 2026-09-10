@@ -4,24 +4,29 @@
 #include <compare>
 
 namespace lob {
+/** @brief Type-safe unsigned order quantity; zero represents a filled state. */
 class Quantity {
     private:
         std::uint64_t quantity;
 
     public:
-        Quantity(): quantity(0){} // Default constructor init at 0
+        /** Constructs a zero quantity. */
+        Quantity(): quantity(0){}
 
-        Quantity(std::uint64_t quantity): quantity(quantity){} // Assign the quantity to the order
+        /** Constructs a quantity from its numeric value. */
+        Quantity(std::uint64_t quantity): quantity(quantity){}
 
-        // Getter for the quantity
+        /** Returns the underlying numeric quantity. */
         std::uint64_t getQuantity() const { return quantity;};
 
-        // Make sure the quantity is valid (not 0)
+        /** Returns whether the quantity is valid for a submitted order. */
         bool isValid() const {
             return quantity != 0;
         };
 
+        /** Compares quantities by numeric value. */
         auto operator<=>(const Quantity &other) const = default;
+        /** Adds quantities while preserving the Quantity type. */
         Quantity operator+(const Quantity &other) const {
             return Quantity{this->quantity + other.quantity};
         };

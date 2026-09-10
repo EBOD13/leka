@@ -23,6 +23,7 @@ struct OrderPool::Page {
     Page* nextFreePage{nullptr}; // Pointer to the next page in the list of pages with free slots
     bool onFreePageList{false}; // Flag to indicate whether the page is on the list of pages with free slots
 
+    /** Allocates one aligned page and initializes its external free list. */
     Page() {
         const long systemPageSize = sysconf(_SC_PAGESIZE);
         if (systemPageSize <= 0 || PageSize % static_cast<std::size_t>(systemPageSize) != 0) {
@@ -54,6 +55,7 @@ struct OrderPool::Page {
         nextFree[SlotsPerPage - 1] = SlotsPerPage;
     }
 
+    /** Returns the page mapping to the operating system. */
     ~Page() {
         munmap(storage, PageSize);
     }
@@ -79,6 +81,7 @@ OrderPool::~OrderPool() {
     }
 }
 
+/** Creates and registers a page without moving existing pages. */
 OrderPool::Page* OrderPool::createPage() {
     auto page = std::make_unique<Page>();
     Page* pagePointer = page.get();
@@ -133,6 +136,14 @@ void OrderPool::removeFromFreePageList(Page* page) {
 Order* OrderPool::allocate(OrderId orderId, Price price, Quantity originalQuantity,
                            Timestamp timestamp, OrderSide orderSide,
                            OrderType orderType, SequenceNumber sequenceNumber) {
+	return allocate(orderId, price, originalQuantity, originalQuantity, timestamp,
+					orderSide, orderType, sequenceNumber);
+}
+
+Order* OrderPool::allocate(OrderId orderId, Price price, Quantity originalQuantity,
+                           Quantity remainingQuantity, Timestamp timestamp,
+                           OrderSide orderSide, OrderType orderType,
+                           SequenceNumber sequenceNumber) {
     Page* page = firstPageWithFreeSlot;
     if (page == nullptr) {
         page = createPage();
@@ -140,8 +151,9 @@ Order* OrderPool::allocate(OrderId orderId, Price price, Quantity originalQuanti
 
     const std::size_t index = page->firstFree;
     Order* order = std::construct_at(page->rawSlot(index), orderId, price,
-                                      originalQuantity, timestamp, orderSide,
-                                      orderType, sequenceNumber);
+                                      originalQuantity, remainingQuantity,
+                                      timestamp, orderSide, orderType,
+                                      sequenceNumber);
 
     page->firstFree = page->nextFree[index];
     --page->freeCount;
@@ -154,6 +166,7 @@ Order* OrderPool::allocate(OrderId orderId, Price price, Quantity originalQuanti
     return order;
 }
 
+/** Releases a live slot after validating pool ownership and allocation state. */
 void OrderPool::release(Order* order) {
     if (order == nullptr) {
         throw std::invalid_argument("Cannot release a null order");

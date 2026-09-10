@@ -5,6 +5,7 @@
 
 namespace lob {
 
+/** Adds a unique OrderId-to-pointer mapping. */
     void OrderIndex::addOrder(Order* order) {
         if (order == nullptr) {
             throw std::invalid_argument("Cannot add a null order");
@@ -18,6 +19,7 @@ namespace lob {
         }
     }
 
+    /** Removes a mapping only when its pointer identity also matches. */
     void OrderIndex::removeOrder(Order* order){
         if(order == nullptr) {
             throw std::invalid_argument("Cannot remove a null order");
@@ -32,6 +34,7 @@ namespace lob {
         orders.erase(it);
     }
 
+    /** Performs average constant-time lookup by OrderId. */
     Order* OrderIndex::findOrder(const OrderId& orderId) const {
         auto it = orders.find(orderId);
         if(it == orders.end()) {

@@ -65,6 +65,16 @@ CMAKE_BINARY_DIR = /Users/ebod/Documents/projects/leka/build
 #=============================================================================
 # Targets provided globally by CMake.
 
+# Special rule for the target test
+test:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running tests..."
+	/opt/homebrew/bin/ctest $(ARGS)
+.PHONY : test
+
+# Special rule for the target test
+test/fast: test
+.PHONY : test/fast
+
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running CMake cache editor..."
@@ -116,6 +126,734 @@ depend:
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
+#=============================================================================
+# Target rules for targets named leka_core
+
+# Build rule for target.
+leka_core: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 leka_core
+.PHONY : leka_core
+
+# fast build rule for target.
+leka_core/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/build
+.PHONY : leka_core/fast
+
+#=============================================================================
+# Target rules for targets named Experimental
+
+# Build rule for target.
+Experimental: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Experimental
+.PHONY : Experimental
+
+# fast build rule for target.
+Experimental/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Experimental.dir/build.make CMakeFiles/Experimental.dir/build
+.PHONY : Experimental/fast
+
+#=============================================================================
+# Target rules for targets named Nightly
+
+# Build rule for target.
+Nightly: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Nightly
+.PHONY : Nightly
+
+# fast build rule for target.
+Nightly/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Nightly.dir/build.make CMakeFiles/Nightly.dir/build
+.PHONY : Nightly/fast
+
+#=============================================================================
+# Target rules for targets named Continuous
+
+# Build rule for target.
+Continuous: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Continuous
+.PHONY : Continuous
+
+# fast build rule for target.
+Continuous/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/build
+.PHONY : Continuous/fast
+
+#=============================================================================
+# Target rules for targets named NightlyMemoryCheck
+
+# Build rule for target.
+NightlyMemoryCheck: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlyMemoryCheck
+.PHONY : NightlyMemoryCheck
+
+# fast build rule for target.
+NightlyMemoryCheck/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlyMemoryCheck.dir/build.make CMakeFiles/NightlyMemoryCheck.dir/build
+.PHONY : NightlyMemoryCheck/fast
+
+#=============================================================================
+# Target rules for targets named NightlyStart
+
+# Build rule for target.
+NightlyStart: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlyStart
+.PHONY : NightlyStart
+
+# fast build rule for target.
+NightlyStart/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlyStart.dir/build.make CMakeFiles/NightlyStart.dir/build
+.PHONY : NightlyStart/fast
+
+#=============================================================================
+# Target rules for targets named NightlyUpdate
+
+# Build rule for target.
+NightlyUpdate: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlyUpdate
+.PHONY : NightlyUpdate
+
+# fast build rule for target.
+NightlyUpdate/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/build
+.PHONY : NightlyUpdate/fast
+
+#=============================================================================
+# Target rules for targets named NightlyConfigure
+
+# Build rule for target.
+NightlyConfigure: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlyConfigure
+.PHONY : NightlyConfigure
+
+# fast build rule for target.
+NightlyConfigure/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlyConfigure.dir/build.make CMakeFiles/NightlyConfigure.dir/build
+.PHONY : NightlyConfigure/fast
+
+#=============================================================================
+# Target rules for targets named NightlyBuild
+
+# Build rule for target.
+NightlyBuild: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlyBuild
+.PHONY : NightlyBuild
+
+# fast build rule for target.
+NightlyBuild/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/build
+.PHONY : NightlyBuild/fast
+
+#=============================================================================
+# Target rules for targets named NightlyTest
+
+# Build rule for target.
+NightlyTest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlyTest
+.PHONY : NightlyTest
+
+# fast build rule for target.
+NightlyTest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/build
+.PHONY : NightlyTest/fast
+
+#=============================================================================
+# Target rules for targets named NightlyCoverage
+
+# Build rule for target.
+NightlyCoverage: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlyCoverage
+.PHONY : NightlyCoverage
+
+# fast build rule for target.
+NightlyCoverage/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlyCoverage.dir/build.make CMakeFiles/NightlyCoverage.dir/build
+.PHONY : NightlyCoverage/fast
+
+#=============================================================================
+# Target rules for targets named NightlyMemCheck
+
+# Build rule for target.
+NightlyMemCheck: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlyMemCheck
+.PHONY : NightlyMemCheck
+
+# fast build rule for target.
+NightlyMemCheck/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlyMemCheck.dir/build.make CMakeFiles/NightlyMemCheck.dir/build
+.PHONY : NightlyMemCheck/fast
+
+#=============================================================================
+# Target rules for targets named NightlySubmit
+
+# Build rule for target.
+NightlySubmit: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 NightlySubmit
+.PHONY : NightlySubmit
+
+# fast build rule for target.
+NightlySubmit/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/NightlySubmit.dir/build.make CMakeFiles/NightlySubmit.dir/build
+.PHONY : NightlySubmit/fast
+
+#=============================================================================
+# Target rules for targets named ExperimentalStart
+
+# Build rule for target.
+ExperimentalStart: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ExperimentalStart
+.PHONY : ExperimentalStart
+
+# fast build rule for target.
+ExperimentalStart/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ExperimentalStart.dir/build.make CMakeFiles/ExperimentalStart.dir/build
+.PHONY : ExperimentalStart/fast
+
+#=============================================================================
+# Target rules for targets named ExperimentalUpdate
+
+# Build rule for target.
+ExperimentalUpdate: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ExperimentalUpdate
+.PHONY : ExperimentalUpdate
+
+# fast build rule for target.
+ExperimentalUpdate/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ExperimentalUpdate.dir/build.make CMakeFiles/ExperimentalUpdate.dir/build
+.PHONY : ExperimentalUpdate/fast
+
+#=============================================================================
+# Target rules for targets named ExperimentalConfigure
+
+# Build rule for target.
+ExperimentalConfigure: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ExperimentalConfigure
+.PHONY : ExperimentalConfigure
+
+# fast build rule for target.
+ExperimentalConfigure/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ExperimentalConfigure.dir/build.make CMakeFiles/ExperimentalConfigure.dir/build
+.PHONY : ExperimentalConfigure/fast
+
+#=============================================================================
+# Target rules for targets named ExperimentalBuild
+
+# Build rule for target.
+ExperimentalBuild: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ExperimentalBuild
+.PHONY : ExperimentalBuild
+
+# fast build rule for target.
+ExperimentalBuild/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ExperimentalBuild.dir/build.make CMakeFiles/ExperimentalBuild.dir/build
+.PHONY : ExperimentalBuild/fast
+
+#=============================================================================
+# Target rules for targets named ExperimentalTest
+
+# Build rule for target.
+ExperimentalTest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ExperimentalTest
+.PHONY : ExperimentalTest
+
+# fast build rule for target.
+ExperimentalTest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ExperimentalTest.dir/build.make CMakeFiles/ExperimentalTest.dir/build
+.PHONY : ExperimentalTest/fast
+
+#=============================================================================
+# Target rules for targets named ExperimentalCoverage
+
+# Build rule for target.
+ExperimentalCoverage: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ExperimentalCoverage
+.PHONY : ExperimentalCoverage
+
+# fast build rule for target.
+ExperimentalCoverage/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ExperimentalCoverage.dir/build.make CMakeFiles/ExperimentalCoverage.dir/build
+.PHONY : ExperimentalCoverage/fast
+
+#=============================================================================
+# Target rules for targets named ExperimentalMemCheck
+
+# Build rule for target.
+ExperimentalMemCheck: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ExperimentalMemCheck
+.PHONY : ExperimentalMemCheck
+
+# fast build rule for target.
+ExperimentalMemCheck/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ExperimentalMemCheck.dir/build.make CMakeFiles/ExperimentalMemCheck.dir/build
+.PHONY : ExperimentalMemCheck/fast
+
+#=============================================================================
+# Target rules for targets named ExperimentalSubmit
+
+# Build rule for target.
+ExperimentalSubmit: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ExperimentalSubmit
+.PHONY : ExperimentalSubmit
+
+# fast build rule for target.
+ExperimentalSubmit/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ExperimentalSubmit.dir/build.make CMakeFiles/ExperimentalSubmit.dir/build
+.PHONY : ExperimentalSubmit/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousStart
+
+# Build rule for target.
+ContinuousStart: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ContinuousStart
+.PHONY : ContinuousStart
+
+# fast build rule for target.
+ContinuousStart/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousStart.dir/build.make CMakeFiles/ContinuousStart.dir/build
+.PHONY : ContinuousStart/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousUpdate
+
+# Build rule for target.
+ContinuousUpdate: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ContinuousUpdate
+.PHONY : ContinuousUpdate
+
+# fast build rule for target.
+ContinuousUpdate/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/build
+.PHONY : ContinuousUpdate/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousConfigure
+
+# Build rule for target.
+ContinuousConfigure: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ContinuousConfigure
+.PHONY : ContinuousConfigure
+
+# fast build rule for target.
+ContinuousConfigure/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousConfigure.dir/build.make CMakeFiles/ContinuousConfigure.dir/build
+.PHONY : ContinuousConfigure/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousBuild
+
+# Build rule for target.
+ContinuousBuild: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ContinuousBuild
+.PHONY : ContinuousBuild
+
+# fast build rule for target.
+ContinuousBuild/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousBuild.dir/build.make CMakeFiles/ContinuousBuild.dir/build
+.PHONY : ContinuousBuild/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousTest
+
+# Build rule for target.
+ContinuousTest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ContinuousTest
+.PHONY : ContinuousTest
+
+# fast build rule for target.
+ContinuousTest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousTest.dir/build.make CMakeFiles/ContinuousTest.dir/build
+.PHONY : ContinuousTest/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousCoverage
+
+# Build rule for target.
+ContinuousCoverage: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ContinuousCoverage
+.PHONY : ContinuousCoverage
+
+# fast build rule for target.
+ContinuousCoverage/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousCoverage.dir/build.make CMakeFiles/ContinuousCoverage.dir/build
+.PHONY : ContinuousCoverage/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousMemCheck
+
+# Build rule for target.
+ContinuousMemCheck: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ContinuousMemCheck
+.PHONY : ContinuousMemCheck
+
+# fast build rule for target.
+ContinuousMemCheck/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousMemCheck.dir/build.make CMakeFiles/ContinuousMemCheck.dir/build
+.PHONY : ContinuousMemCheck/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousSubmit
+
+# Build rule for target.
+ContinuousSubmit: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ContinuousSubmit
+.PHONY : ContinuousSubmit
+
+# fast build rule for target.
+ContinuousSubmit/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousSubmit.dir/build.make CMakeFiles/ContinuousSubmit.dir/build
+.PHONY : ContinuousSubmit/fast
+
+#=============================================================================
+# Target rules for targets named test_order_book
+
+# Build rule for target.
+test_order_book: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_order_book
+.PHONY : test_order_book
+
+# fast build rule for target.
+test_order_book/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_order_book.dir/build.make CMakeFiles/test_order_book.dir/build
+.PHONY : test_order_book/fast
+
+#=============================================================================
+# Target rules for targets named test_matching_engine
+
+# Build rule for target.
+test_matching_engine: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_matching_engine
+.PHONY : test_matching_engine
+
+# fast build rule for target.
+test_matching_engine/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_matching_engine.dir/build.make CMakeFiles/test_matching_engine.dir/build
+.PHONY : test_matching_engine/fast
+
+#=============================================================================
+# Target rules for targets named benchmark_order_book
+
+# Build rule for target.
+benchmark_order_book: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 benchmark_order_book
+.PHONY : benchmark_order_book
+
+# fast build rule for target.
+benchmark_order_book/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark_order_book.dir/build.make CMakeFiles/benchmark_order_book.dir/build
+.PHONY : benchmark_order_book/fast
+
+benchmarks/benchmark_main.o: benchmarks/benchmark_main.cpp.o
+.PHONY : benchmarks/benchmark_main.o
+
+# target to build an object file
+benchmarks/benchmark_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark_order_book.dir/build.make CMakeFiles/benchmark_order_book.dir/benchmarks/benchmark_main.cpp.o
+.PHONY : benchmarks/benchmark_main.cpp.o
+
+benchmarks/benchmark_main.i: benchmarks/benchmark_main.cpp.i
+.PHONY : benchmarks/benchmark_main.i
+
+# target to preprocess a source file
+benchmarks/benchmark_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark_order_book.dir/build.make CMakeFiles/benchmark_order_book.dir/benchmarks/benchmark_main.cpp.i
+.PHONY : benchmarks/benchmark_main.cpp.i
+
+benchmarks/benchmark_main.s: benchmarks/benchmark_main.cpp.s
+.PHONY : benchmarks/benchmark_main.s
+
+# target to generate assembly for a file
+benchmarks/benchmark_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark_order_book.dir/build.make CMakeFiles/benchmark_order_book.dir/benchmarks/benchmark_main.cpp.s
+.PHONY : benchmarks/benchmark_main.cpp.s
+
+src/book/order_book.o: src/book/order_book.cpp.o
+.PHONY : src/book/order_book.o
+
+# target to build an object file
+src/book/order_book.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/order_book.cpp.o
+.PHONY : src/book/order_book.cpp.o
+
+src/book/order_book.i: src/book/order_book.cpp.i
+.PHONY : src/book/order_book.i
+
+# target to preprocess a source file
+src/book/order_book.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/order_book.cpp.i
+.PHONY : src/book/order_book.cpp.i
+
+src/book/order_book.s: src/book/order_book.cpp.s
+.PHONY : src/book/order_book.s
+
+# target to generate assembly for a file
+src/book/order_book.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/order_book.cpp.s
+.PHONY : src/book/order_book.cpp.s
+
+src/book/order_pool.o: src/book/order_pool.cpp.o
+.PHONY : src/book/order_pool.o
+
+# target to build an object file
+src/book/order_pool.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/order_pool.cpp.o
+.PHONY : src/book/order_pool.cpp.o
+
+src/book/order_pool.i: src/book/order_pool.cpp.i
+.PHONY : src/book/order_pool.i
+
+# target to preprocess a source file
+src/book/order_pool.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/order_pool.cpp.i
+.PHONY : src/book/order_pool.cpp.i
+
+src/book/order_pool.s: src/book/order_pool.cpp.s
+.PHONY : src/book/order_pool.s
+
+# target to generate assembly for a file
+src/book/order_pool.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/order_pool.cpp.s
+.PHONY : src/book/order_pool.cpp.s
+
+src/book/price_level.o: src/book/price_level.cpp.o
+.PHONY : src/book/price_level.o
+
+# target to build an object file
+src/book/price_level.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/price_level.cpp.o
+.PHONY : src/book/price_level.cpp.o
+
+src/book/price_level.i: src/book/price_level.cpp.i
+.PHONY : src/book/price_level.i
+
+# target to preprocess a source file
+src/book/price_level.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/price_level.cpp.i
+.PHONY : src/book/price_level.cpp.i
+
+src/book/price_level.s: src/book/price_level.cpp.s
+.PHONY : src/book/price_level.s
+
+# target to generate assembly for a file
+src/book/price_level.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/book/price_level.cpp.s
+.PHONY : src/book/price_level.cpp.s
+
+src/index/order_index.o: src/index/order_index.cpp.o
+.PHONY : src/index/order_index.o
+
+# target to build an object file
+src/index/order_index.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/index/order_index.cpp.o
+.PHONY : src/index/order_index.cpp.o
+
+src/index/order_index.i: src/index/order_index.cpp.i
+.PHONY : src/index/order_index.i
+
+# target to preprocess a source file
+src/index/order_index.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/index/order_index.cpp.i
+.PHONY : src/index/order_index.cpp.i
+
+src/index/order_index.s: src/index/order_index.cpp.s
+.PHONY : src/index/order_index.s
+
+# target to generate assembly for a file
+src/index/order_index.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/index/order_index.cpp.s
+.PHONY : src/index/order_index.cpp.s
+
+src/matching/execution.o: src/matching/execution.cpp.o
+.PHONY : src/matching/execution.o
+
+# target to build an object file
+src/matching/execution.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/execution.cpp.o
+.PHONY : src/matching/execution.cpp.o
+
+src/matching/execution.i: src/matching/execution.cpp.i
+.PHONY : src/matching/execution.i
+
+# target to preprocess a source file
+src/matching/execution.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/execution.cpp.i
+.PHONY : src/matching/execution.cpp.i
+
+src/matching/execution.s: src/matching/execution.cpp.s
+.PHONY : src/matching/execution.s
+
+# target to generate assembly for a file
+src/matching/execution.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/execution.cpp.s
+.PHONY : src/matching/execution.cpp.s
+
+src/matching/matching_engine.o: src/matching/matching_engine.cpp.o
+.PHONY : src/matching/matching_engine.o
+
+# target to build an object file
+src/matching/matching_engine.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/matching_engine.cpp.o
+.PHONY : src/matching/matching_engine.cpp.o
+
+src/matching/matching_engine.i: src/matching/matching_engine.cpp.i
+.PHONY : src/matching/matching_engine.i
+
+# target to preprocess a source file
+src/matching/matching_engine.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/matching_engine.cpp.i
+.PHONY : src/matching/matching_engine.cpp.i
+
+src/matching/matching_engine.s: src/matching/matching_engine.cpp.s
+.PHONY : src/matching/matching_engine.s
+
+# target to generate assembly for a file
+src/matching/matching_engine.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/matching_engine.cpp.s
+.PHONY : src/matching/matching_engine.cpp.s
+
+src/matching/sequence_number_generator.o: src/matching/sequence_number_generator.cpp.o
+.PHONY : src/matching/sequence_number_generator.o
+
+# target to build an object file
+src/matching/sequence_number_generator.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/sequence_number_generator.cpp.o
+.PHONY : src/matching/sequence_number_generator.cpp.o
+
+src/matching/sequence_number_generator.i: src/matching/sequence_number_generator.cpp.i
+.PHONY : src/matching/sequence_number_generator.i
+
+# target to preprocess a source file
+src/matching/sequence_number_generator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/sequence_number_generator.cpp.i
+.PHONY : src/matching/sequence_number_generator.cpp.i
+
+src/matching/sequence_number_generator.s: src/matching/sequence_number_generator.cpp.s
+.PHONY : src/matching/sequence_number_generator.s
+
+# target to generate assembly for a file
+src/matching/sequence_number_generator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/matching/sequence_number_generator.cpp.s
+.PHONY : src/matching/sequence_number_generator.cpp.s
+
+src/order/order.o: src/order/order.cpp.o
+.PHONY : src/order/order.o
+
+# target to build an object file
+src/order/order.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order.cpp.o
+.PHONY : src/order/order.cpp.o
+
+src/order/order.i: src/order/order.cpp.i
+.PHONY : src/order/order.i
+
+# target to preprocess a source file
+src/order/order.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order.cpp.i
+.PHONY : src/order/order.cpp.i
+
+src/order/order.s: src/order/order.cpp.s
+.PHONY : src/order/order.s
+
+# target to generate assembly for a file
+src/order/order.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order.cpp.s
+.PHONY : src/order/order.cpp.s
+
+src/order/order_event.o: src/order/order_event.cpp.o
+.PHONY : src/order/order_event.o
+
+# target to build an object file
+src/order/order_event.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order_event.cpp.o
+.PHONY : src/order/order_event.cpp.o
+
+src/order/order_event.i: src/order/order_event.cpp.i
+.PHONY : src/order/order_event.i
+
+# target to preprocess a source file
+src/order/order_event.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order_event.cpp.i
+.PHONY : src/order/order_event.cpp.i
+
+src/order/order_event.s: src/order/order_event.cpp.s
+.PHONY : src/order/order_event.s
+
+# target to generate assembly for a file
+src/order/order_event.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order_event.cpp.s
+.PHONY : src/order/order_event.cpp.s
+
+src/order/order_id_generator.o: src/order/order_id_generator.cpp.o
+.PHONY : src/order/order_id_generator.o
+
+# target to build an object file
+src/order/order_id_generator.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order_id_generator.cpp.o
+.PHONY : src/order/order_id_generator.cpp.o
+
+src/order/order_id_generator.i: src/order/order_id_generator.cpp.i
+.PHONY : src/order/order_id_generator.i
+
+# target to preprocess a source file
+src/order/order_id_generator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order_id_generator.cpp.i
+.PHONY : src/order/order_id_generator.cpp.i
+
+src/order/order_id_generator.s: src/order/order_id_generator.cpp.s
+.PHONY : src/order/order_id_generator.s
+
+# target to generate assembly for a file
+src/order/order_id_generator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/leka_core.dir/build.make CMakeFiles/leka_core.dir/src/order/order_id_generator.cpp.s
+.PHONY : src/order/order_id_generator.cpp.s
+
+tests/unit/test_matching_engine.o: tests/unit/test_matching_engine.cpp.o
+.PHONY : tests/unit/test_matching_engine.o
+
+# target to build an object file
+tests/unit/test_matching_engine.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_matching_engine.dir/build.make CMakeFiles/test_matching_engine.dir/tests/unit/test_matching_engine.cpp.o
+.PHONY : tests/unit/test_matching_engine.cpp.o
+
+tests/unit/test_matching_engine.i: tests/unit/test_matching_engine.cpp.i
+.PHONY : tests/unit/test_matching_engine.i
+
+# target to preprocess a source file
+tests/unit/test_matching_engine.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_matching_engine.dir/build.make CMakeFiles/test_matching_engine.dir/tests/unit/test_matching_engine.cpp.i
+.PHONY : tests/unit/test_matching_engine.cpp.i
+
+tests/unit/test_matching_engine.s: tests/unit/test_matching_engine.cpp.s
+.PHONY : tests/unit/test_matching_engine.s
+
+# target to generate assembly for a file
+tests/unit/test_matching_engine.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_matching_engine.dir/build.make CMakeFiles/test_matching_engine.dir/tests/unit/test_matching_engine.cpp.s
+.PHONY : tests/unit/test_matching_engine.cpp.s
+
+tests/unit/test_order_book.o: tests/unit/test_order_book.cpp.o
+.PHONY : tests/unit/test_order_book.o
+
+# target to build an object file
+tests/unit/test_order_book.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_order_book.dir/build.make CMakeFiles/test_order_book.dir/tests/unit/test_order_book.cpp.o
+.PHONY : tests/unit/test_order_book.cpp.o
+
+tests/unit/test_order_book.i: tests/unit/test_order_book.cpp.i
+.PHONY : tests/unit/test_order_book.i
+
+# target to preprocess a source file
+tests/unit/test_order_book.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_order_book.dir/build.make CMakeFiles/test_order_book.dir/tests/unit/test_order_book.cpp.i
+.PHONY : tests/unit/test_order_book.cpp.i
+
+tests/unit/test_order_book.s: tests/unit/test_order_book.cpp.s
+.PHONY : tests/unit/test_order_book.s
+
+# target to generate assembly for a file
+tests/unit/test_order_book.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_order_book.dir/build.make CMakeFiles/test_order_book.dir/tests/unit/test_order_book.cpp.s
+.PHONY : tests/unit/test_order_book.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -124,6 +862,78 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... test"
+	@echo "... Continuous"
+	@echo "... ContinuousBuild"
+	@echo "... ContinuousConfigure"
+	@echo "... ContinuousCoverage"
+	@echo "... ContinuousMemCheck"
+	@echo "... ContinuousStart"
+	@echo "... ContinuousSubmit"
+	@echo "... ContinuousTest"
+	@echo "... ContinuousUpdate"
+	@echo "... Experimental"
+	@echo "... ExperimentalBuild"
+	@echo "... ExperimentalConfigure"
+	@echo "... ExperimentalCoverage"
+	@echo "... ExperimentalMemCheck"
+	@echo "... ExperimentalStart"
+	@echo "... ExperimentalSubmit"
+	@echo "... ExperimentalTest"
+	@echo "... ExperimentalUpdate"
+	@echo "... Nightly"
+	@echo "... NightlyBuild"
+	@echo "... NightlyConfigure"
+	@echo "... NightlyCoverage"
+	@echo "... NightlyMemCheck"
+	@echo "... NightlyMemoryCheck"
+	@echo "... NightlyStart"
+	@echo "... NightlySubmit"
+	@echo "... NightlyTest"
+	@echo "... NightlyUpdate"
+	@echo "... benchmark_order_book"
+	@echo "... leka_core"
+	@echo "... test_matching_engine"
+	@echo "... test_order_book"
+	@echo "... benchmarks/benchmark_main.o"
+	@echo "... benchmarks/benchmark_main.i"
+	@echo "... benchmarks/benchmark_main.s"
+	@echo "... src/book/order_book.o"
+	@echo "... src/book/order_book.i"
+	@echo "... src/book/order_book.s"
+	@echo "... src/book/order_pool.o"
+	@echo "... src/book/order_pool.i"
+	@echo "... src/book/order_pool.s"
+	@echo "... src/book/price_level.o"
+	@echo "... src/book/price_level.i"
+	@echo "... src/book/price_level.s"
+	@echo "... src/index/order_index.o"
+	@echo "... src/index/order_index.i"
+	@echo "... src/index/order_index.s"
+	@echo "... src/matching/execution.o"
+	@echo "... src/matching/execution.i"
+	@echo "... src/matching/execution.s"
+	@echo "... src/matching/matching_engine.o"
+	@echo "... src/matching/matching_engine.i"
+	@echo "... src/matching/matching_engine.s"
+	@echo "... src/matching/sequence_number_generator.o"
+	@echo "... src/matching/sequence_number_generator.i"
+	@echo "... src/matching/sequence_number_generator.s"
+	@echo "... src/order/order.o"
+	@echo "... src/order/order.i"
+	@echo "... src/order/order.s"
+	@echo "... src/order/order_event.o"
+	@echo "... src/order/order_event.i"
+	@echo "... src/order/order_event.s"
+	@echo "... src/order/order_id_generator.o"
+	@echo "... src/order/order_id_generator.i"
+	@echo "... src/order/order_id_generator.s"
+	@echo "... tests/unit/test_matching_engine.o"
+	@echo "... tests/unit/test_matching_engine.i"
+	@echo "... tests/unit/test_matching_engine.s"
+	@echo "... tests/unit/test_order_book.o"
+	@echo "... tests/unit/test_order_book.i"
+	@echo "... tests/unit/test_order_book.s"
 .PHONY : help
 
 

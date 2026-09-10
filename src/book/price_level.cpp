@@ -5,7 +5,7 @@
 
 namespace lob {
 
-// Add an order to the price level
+/** Appends an eligible order and updates FIFO and aggregate state. */
 void PriceLevel::addOrder(Order* order) {
 	if (order == nullptr) {
 		throw std::invalid_argument("Cannot add a null order");
@@ -37,7 +37,7 @@ void PriceLevel::addOrder(Order* order) {
 	order->setPriceLevel(this);
 }
 
-// Remove an order from the price level
+/** Unlinks an order in constant time while it is still alive. */
 void PriceLevel::removeOrder(Order* order) {
 	if (order == nullptr || order->getPriceLevel() != this) {
 		throw std::invalid_argument("Order does not belong to this price level");
@@ -66,7 +66,7 @@ void PriceLevel::removeOrder(Order* order) {
 	order->setPriceLevel(nullptr);
 }
 
-// Reduce the total quantity of the price level by the specified amount
+/** Applies a partial execution to the aggregate quantity. */
 void PriceLevel::reduceTotalQuantity(Quantity quantity) {
 	if (quantity > totalQuantity) {
 		throw std::invalid_argument("Cannot reduce price level quantity below zero");

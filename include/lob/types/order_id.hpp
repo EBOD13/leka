@@ -6,16 +6,19 @@
 
 namespace lob {
 
+/** @brief Type-safe identifier for an order; zero is reserved as invalid. */
 class OrderId {
     private:
         std::uint64_t id;
 
     public:
-        OrderId(): id(0){} // Default constructor initilizes at 0
+        /** Constructs an invalid, zero-valued identifier. */
+        OrderId(): id(0){}
 
-        OrderId(std::uint64_t id): id(id){} // Assign the id to the order
+        /** Constructs an identifier from its numeric value. */
+        OrderId(std::uint64_t id): id(id){}
 
-        // Getter for the order id
+        /** Returns the underlying numeric identifier. */
         std::uint64_t getId() const { return id; }
         
         // Overload the equality operator to compare two OrderID objects
@@ -23,7 +26,7 @@ class OrderId {
             return this->id == other.id;
         };
 
-        // Make sure the order id is valid (not 0)
+        /** Returns whether the identifier is nonzero. */
         bool isValid() const {
             return id != 0;
         };

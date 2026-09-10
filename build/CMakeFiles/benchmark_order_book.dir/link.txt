@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -fsanitize=address,undefined CMakeFiles/benchmark_order_book.dir/benchmarks/benchmark_main.cpp.o -o benchmark_order_book  libleka_core.a

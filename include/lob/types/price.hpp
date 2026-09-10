@@ -5,23 +5,26 @@
 #include <compare>
 
 namespace lob {
+/** @brief Type-safe nonzero price value used for price ordering. */
 class Price {
     private:
         std::uint64_t price;
 
     public:
-        Price(): price(0){} // Default constructor init at 0
+        /** Constructs an invalid, zero-valued price. */
+        Price(): price(0){}
 
-        Price(std::uint64_t price): price(price){} // Assign the price to the order
+        /** Constructs a price from its numeric value. */
+        Price(std::uint64_t price): price(price){}
 
-        // Getter for the price
+        /** Returns the underlying numeric price. */
         std::uint64_t getPrice() const { return price;};
 
-        // Overload operators to compare two Price objects
+        /** Compares prices chronologically by numeric value. */
         auto operator<=>(const Price &other) const {
             return this->price <=> other.price;
         };
-        // Make sure the price is valid (not 0)
+        /** Returns whether the price is nonzero. */
         bool isValid() const {
             return price != 0;
         };

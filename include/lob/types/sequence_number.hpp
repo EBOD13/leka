@@ -4,23 +4,27 @@
 #include <compare>
 
 namespace lob {
+/** @brief Monotonic engine sequence used for deterministic processing order. */
 class SequenceNumber {
     private:
         std::uint64_t sequenceNumber;
 
     public:
-        explicit SequenceNumber(): sequenceNumber(0){} // Default constructor initializes at 0
+        /** Constructs an invalid, zero-valued sequence number. */
+        explicit SequenceNumber(): sequenceNumber(0){}
 
-        explicit SequenceNumber(std::uint64_t sequenceNumber): sequenceNumber(sequenceNumber){} // Assign the sequence number to the order
+        /** Constructs a sequence number from its numeric value. */
+        explicit SequenceNumber(std::uint64_t sequenceNumber): sequenceNumber(sequenceNumber){}
 
-        // Getter for the sequence number
+        /** Returns the underlying sequence value. */
         std::uint64_t getSequenceNumber() const { return sequenceNumber; }
 
-        // Make sure the sequence number is valid (not 0)
+        /** Returns whether the sequence number is nonzero. */
         bool isValid() const {
             return sequenceNumber != 0;
         };
 
+        /** Compares sequence numbers by processing order. */
         auto operator<=>(const SequenceNumber &other) const = default;
 };
 } // namespace lob
