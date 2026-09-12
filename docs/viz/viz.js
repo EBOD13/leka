@@ -179,32 +179,48 @@ class Panel {
       ctx.fillText(v.toFixed(2), w - padR + 8, yy + 3);
     }
 
-    // spread band
+    // Bid and ask are drawn as their own lines, not just as the edges of a
+    // fill: on a liquid book the spread is a few percent of the visible price
+    // range, so a band alone is invisible at this scale and the chart reads
+    // as a single line. The fill stays as the tint between them.
+    const sell = this.token('--sell');
+
     ctx.beginPath();
     pts.forEach((p, k) => k ? ctx.lineTo(x(p.i), y(p.ask)) : ctx.moveTo(x(p.i), y(p.ask)));
     for (let k = pts.length - 1; k >= 0; k--) ctx.lineTo(x(pts[k].i), y(pts[k].bid));
     ctx.closePath();
-    ctx.fillStyle = this.alpha(accent, 0.14); ctx.fill();
+    ctx.fillStyle = this.alpha(accent, 0.10); ctx.fill();
 
-    // area under mid
+    // area under the bid, so the chart still reads as a price series
     const g = ctx.createLinearGradient(0, padT, 0, h - padB);
-    g.addColorStop(0, this.alpha(accent, 0.24));
+    g.addColorStop(0, this.alpha(accent, 0.16));
     g.addColorStop(1, this.alpha(accent, 0));
     ctx.beginPath();
-    pts.forEach((p, k) => k ? ctx.lineTo(x(p.i), y(p.mid)) : ctx.moveTo(x(p.i), y(p.mid)));
+    pts.forEach((p, k) => k ? ctx.lineTo(x(p.i), y(p.bid)) : ctx.moveTo(x(p.i), y(p.bid)));
     ctx.lineTo(x(pts[pts.length - 1].i), h - padB);
     ctx.lineTo(x(pts[0].i), h - padB);
     ctx.closePath();
     ctx.fillStyle = g; ctx.fill();
 
-    // mid line
+    // mid: faint dashed reference between the two quotes
+    ctx.setLineDash([3, 3]);
     ctx.beginPath();
     pts.forEach((p, k) => k ? ctx.lineTo(x(p.i), y(p.mid)) : ctx.moveTo(x(p.i), y(p.mid)));
-    ctx.strokeStyle = accent; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.strokeStyle = this.alpha(this.token('--muted-text'), 0.55);
+    ctx.lineWidth = 1; ctx.stroke();
+    ctx.setLineDash([]);
+
+    const quoteLine = (key, colour) => {
+      ctx.beginPath();
+      pts.forEach((p, k) => k ? ctx.lineTo(x(p.i), y(p[key])) : ctx.moveTo(x(p.i), y(p[key])));
+      ctx.strokeStyle = colour; ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.stroke();
+    };
+    quoteLine('ask', sell);
+    quoteLine('bid', accent);
 
     // last price marker and tag
     const last = pts[pts.length - 1];
-    const ly = y(last.mid);
+    const ly = y(last.bid);
     ctx.setLineDash([2, 3]);
     ctx.beginPath(); ctx.moveTo(padL, ly); ctx.lineTo(w - padR, ly);
     ctx.strokeStyle = this.alpha(accent, 0.45); ctx.lineWidth = 1; ctx.stroke();
@@ -212,7 +228,7 @@ class Panel {
     ctx.beginPath(); ctx.arc(x(last.i), ly, 2.8, 0, Math.PI * 2);
     ctx.fillStyle = accent; ctx.fill();
 
-    const tag = last.mid.toFixed(2);
+    const tag = last.bid.toFixed(2);
     ctx.font = "600 10px 'JetBrains Mono', ui-monospace, monospace";
     const tw = ctx.measureText(tag).width + 11;
     ctx.fillStyle = accent;
@@ -472,9 +488,35 @@ async function setMode(mode) {
   }
 
   panelsEl.innerHTML = '';
+
+  // Says plainly what the two columns are and what to look for. Comparing
+  // two order books is only intuitive if the reader knows which difference
+  // is the interesting one.
+  if (mode === 'both') {
+    const note = document.createElement('p');
+    note.className = 'compare-note';
+    note.innerHTML =
+      '<b>Same cursor, two books.</b> Left is a real Nasdaq BX session; right is ' +
+      'synthetic flow from the Hawkes model, replayed through the same engine. ' +
+      '<span class="hint">Watch the tape and the depth chart: the synthetic book ' +
+      'trades far less often than the real one, which is the calibration gap the ' +
+      'simulator&rsquo;s KS tests measure numerically.</span>';
+    panelsEl.appendChild(note);
+  }
+
   const tpl = document.getElementById('panelTemplate');
+  // Compare mode halves the horizontal space, so the canvases are shorter to
+  // keep each panel's aspect sane. These are read once per Panel, in its
+  // constructor, so they must be set before construction.
+  const heights = mode === 'both'
+    ? { price: 168, depth: 118, latency: 96, flow: 70 }
+    : { price: 230, depth: 150, latency: 118, flow: 84 };
+
   panels = datasets.map(d => {
     const node = tpl.content.firstElementChild.cloneNode(true);
+    for (const [cls, h] of Object.entries(heights)) {
+      node.querySelector(`canvas.${cls}`).height = h;
+    }
     panelsEl.appendChild(node);
     return new Panel(node, d);
   });

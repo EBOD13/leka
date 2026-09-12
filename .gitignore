@@ -22,3 +22,4 @@ doc/html/
 
 # Recorded snapshots: regenerate with snapshot_recorder
 docs/viz/data/
+RESUME_BULLETS.md

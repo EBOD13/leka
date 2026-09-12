@@ -1,0 +1,229 @@
+/*
+ * Leka documentation theme.
+ *
+ * Maps doxygen-awesome's variables onto the same obsidian + emerald/teal
+ * token system the replay viewer uses, so the API reference, the ADRs, and
+ * the viewer read as one publication rather than three.
+ *
+ * Everything here is a variable override plus a small number of typographic
+ * corrections. Nothing re-implements doxygen-awesome's layout.
+ */
+
+html {
+  /* accent */
+  --primary-color: #2fbf8f;
+  --primary-dark-color: #23a67a;
+  --primary-light-color: #4fd6a8;
+  --primary-lighter-color: #1f5c48;
+  --primary-lightest-color: #17322a;
+  --on-primary-color: #06120d;
+  --link-color: #2fbf8f;
+
+  /* surfaces */
+  --page-background-color: #0c0d0e;
+  --page-foreground-color: #f3f1ec;
+  --page-secondary-foreground-color: #9b9ea1;
+  --separator-color: rgba(243, 241, 236, 0.08);
+  --side-nav-background: #0c0d0e;
+  --side-nav-foreground: #9b9ea1;
+  --header-background: #0c0d0e;
+  --header-foreground: #f3f1ec;
+  --odd-color: rgba(243, 241, 236, 0.022);
+  --code-background: #17191b;
+  --code-foreground: #c4c6c8;
+  --fragment-background: #141618;
+  --fragment-foreground: #c4c6c8;
+  --tablehead-background: #17191b;
+  --tablehead-foreground: #c4c6c8;
+  --blockquote-background: #141618;
+  --blockquote-foreground: #9b9ea1;
+  --searchbar-background: #17191b;
+  --searchbar-foreground: #f3f1ec;
+  --searchbar-border-color: rgba(243, 241, 236, 0.09);
+
+  /* type */
+  --font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-monospace: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --page-font-size: 15.5px;
+  --navigation-font-size: 13.5px;
+  --toc-font-size: 13px;
+  --code-font-size: 13px;
+  --content-line-height: 1.72;
+  --content-maxwidth: 1020px;
+
+  /* shape: flatter and quieter than the stock theme */
+  --border-radius-large: 10px;
+  --border-radius-medium: 8px;
+  --border-radius-small: 5px;
+  --box-shadow: none;
+  --spacing-large: 18px;
+  --spacing-xlarge: 34px;
+
+  /* admonitions, kept within the palette */
+  --note-color: #2fbf8f;
+  --note-color-dark: #23a67a;
+  --note-color-darker: #d8f3e8;
+  --warning-color: hsl(350, 62%, 60%);
+  --warning-color-dark: hsl(350, 52%, 44%);
+  --warning-color-darker: hsl(350, 40%, 90%);
+}
+
+html.dark-mode { color-scheme: dark; }
+
+/* Light mode flips the token values; the accent deepens rather than changing
+   hue, matching the viewer's behaviour. */
+html.light-mode {
+  --primary-color: #046c4e;
+  --primary-dark-color: #035939;
+  --primary-light-color: #0f8c66;
+  --primary-lighter-color: #cfe8dd;
+  --primary-lightest-color: #eaf5f0;
+  --on-primary-color: #ffffff;
+  --link-color: #046c4e;
+
+  --page-background-color: #faf9f6;
+  --page-foreground-color: #15181b;
+  --page-secondary-foreground-color: #6b6e72;
+  --separator-color: rgba(20, 20, 20, 0.1);
+  --side-nav-background: #faf9f6;
+  --side-nav-foreground: #33373b;
+  --header-background: #faf9f6;
+  --header-foreground: #15181b;
+  --odd-color: rgba(20, 20, 20, 0.025);
+  --code-background: #f0eee9;
+  --code-foreground: #33373b;
+  --fragment-background: #f5f3ef;
+  --fragment-foreground: #33373b;
+  --tablehead-background: #f0eee9;
+  --tablehead-foreground: #33373b;
+  --blockquote-background: #f5f3ef;
+  --blockquote-foreground: #33373b;
+  --searchbar-background: #f0eee9;
+  --searchbar-foreground: #15181b;
+}
+
+/* ---------- typography ---------- */
+
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+h1, h2, h3, h4, .title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+h1, .title { font-size: 1.9rem; line-height: 1.25; }
+h2 { font-size: 1.42rem; line-height: 1.3; margin-top: 2.4em; }
+h3 { font-size: 1.12rem; margin-top: 1.9em; }
+
+/* Doxygen renders markdown headings with a trailing anchor-permalink; keep it
+   from adding stray underline artifacts to serif headings. */
+h1 a, h2 a, h3 a { border-bottom: 0 !important; }
+
+/*
+ * Markdown code spans inside headings become bare <tt>, which inherits no
+ * styling from the theme and rendered as unreadable raw monospace. The ADR
+ * headings were rewritten as prose, but <tt> still appears in body text from
+ * Doxygen's own output, so it is styled to match inline <code>.
+ */
+tt, code, .tt {
+  font-family: var(--font-family-monospace);
+  font-size: 0.88em;
+  background: var(--code-background);
+  color: var(--code-foreground);
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--separator-color);
+}
+h1 tt, h2 tt, h3 tt, h1 code, h2 code, h3 code {
+  font-size: 0.82em;
+  font-weight: 400;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--primary-light-color);
+}
+a tt, a code { border: 0; background: transparent; padding: 0; color: inherit; }
+
+/* Fenced blocks: quieter frame, more air, no drop shadow. */
+div.fragment, pre.fragment {
+  border: 1px solid var(--separator-color);
+  border-radius: var(--border-radius-medium);
+  padding: 14px 16px;
+  background: var(--fragment-background);
+  line-height: 1.62;
+}
+
+/* Tables: hairline rules only, no heavy borders. */
+table.markdownTable, table.doxtable {
+  border-collapse: collapse;
+  border: 0;
+  font-size: 0.94em;
+}
+table.markdownTable th, table.doxtable th {
+  background: transparent;
+  color: var(--page-secondary-foreground-color);
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.76em;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  border: 0;
+  border-bottom: 1px solid var(--separator-color);
+  padding: 8px 14px 8px 0;
+  text-align: left;
+}
+table.markdownTable td, table.doxtable td {
+  border: 0;
+  border-bottom: 1px solid var(--separator-color);
+  padding: 9px 14px 9px 0;
+  vertical-align: top;
+}
+table.markdownTable tr:hover td, table.doxtable tr:hover td { background: var(--odd-color); }
+
+/* Horizontal rules between ADRs: a hairline, not a groove. */
+hr { border: 0; border-top: 1px solid var(--separator-color); margin: 3.2em 0; }
+
+/* Blockquotes: a single accent rule rather than a filled box. */
+blockquote {
+  background: transparent;
+  border: 0;
+  border-left: 2px solid var(--primary-color);
+  margin: 1.4em 0;
+  padding: 0.15em 0 0.15em 18px;
+  color: var(--page-secondary-foreground-color);
+}
+blockquote p { margin: 0.35em 0; }
+
+/* Sidebar and header: flat, no shadow, hairline separator only. */
+#side-nav, #nav-tree, #nav-tree .selected { background: var(--side-nav-background); }
+#nav-tree .item > a { font-size: var(--navigation-font-size); }
+#top { border-bottom: 1px solid var(--separator-color); box-shadow: none; }
+#titlearea { border: 0; }
+#projectname { font-family: 'Playfair Display', Georgia, serif; font-weight: 500; letter-spacing: -0.01em; }
+#projectbrief { color: var(--page-secondary-foreground-color); font-weight: 300; }
+
+/* Links: underline on hover only, so prose stays calm. */
+a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .18s ease; }
+a:hover { border-bottom-color: var(--primary-color); }
+.contents a.el { font-weight: 500; }
+
+/* Lists: a little more air between items in long ADR prose. */
+.contents ul li, .contents ol li { margin: 0.3em 0; }
+
+/* Member documentation: drop the boxed look. */
+.memtitle { background: transparent; border: 0; border-bottom: 1px solid var(--separator-color); border-radius: 0; box-shadow: none; }
+.memitem { box-shadow: none; }
+.memproto { background: var(--code-background); border: 1px solid var(--separator-color); border-radius: var(--border-radius-medium); }
+.memdoc { border: 0; box-shadow: none; }
+
+/* Standing link back to the replay viewer, injected in header.html. */
+#leka-viz-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-left: 14px; padding: 6px 13px;
+  border-radius: var(--border-radius-medium);
+  background: var(--primary-color); color: var(--on-primary-color) !important;
+  font-family: var(--font-family); font-size: 12.5px; font-weight: 600;
+  letter-spacing: 0.015em; border-bottom: 0 !important;
+  white-space: nowrap;
+}
+#leka-viz-link:hover { background: var(--primary-dark-color); border-bottom: 0 !important; }

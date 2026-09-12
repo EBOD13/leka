@@ -67,7 +67,7 @@ matters for the ITCH replay tool this event model needs to consume.
 
 ---
 
-## ADR-002: Tick-indexed PriceLadder replaces `std::map<Price, PriceLevel>`
+## ADR-002: A tick-indexed price ladder replaces the ordered map
 
 **Status:** Accepted, 2026.
 
@@ -187,7 +187,7 @@ scenario was specifically what was replaced.
 
 ---
 
-## ADR-003: `itch_replay` sizes the ladder from observed data, not a guess
+## ADR-003: The replay tool sizes the ladder from observed data, not a guess
 
 **Status:** Accepted, 2026.
 
@@ -385,7 +385,7 @@ effect.
 
 ---
 
-## ADR-006: OrderIndex is open-addressed, not `std::unordered_map`
+## ADR-006: The order index is open-addressed, not a chained hash map
 
 **Status:** Accepted, 2026.
 
@@ -479,7 +479,7 @@ same call path rather than competing for the same cycles.
 
 ---
 
-## ADR-007: `Order::isValid()` runs once per insert, not twice
+## ADR-007: Order validation runs once per insert, not twice
 
 **Status:** Accepted, 2026.
 
@@ -542,7 +542,7 @@ inconsistent choice rather than the conservative one.
 
 ---
 
-## ADR-008: `reserveOrderCapacity()` moves OrderPool/OrderIndex growth out of the hot path
+## ADR-008: Reserving capacity moves pool and index growth off the hot path
 
 **Status:** Accepted, 2026.
 
