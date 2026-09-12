@@ -42,6 +42,50 @@ fonts_and_scripts = '''<link rel="preconnect" href="https://fonts.googleapis.com
 </script>
 </head>'''
 
+# Our own mermaid initialization goes BEFORE the $mermaidjs placeholder, so
+# it renders every diagram first, with themeVariables pulled from the exact
+# same palette as the rest of the site. `startOnLoad: false` plus an explicit
+# `mermaid.run()` means ours does the real rendering; Doxygen's own
+# $mermaidjs-substituted init call still runs afterward (it cannot be
+# suppressed -- it is generated per-page, not from this template) but finds
+# every diagram already marked processed and is a harmless no-op.
+mermaid_leka = """<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+        fontFamily: "'Source Sans 3', -apple-system, sans-serif",
+        primaryColor: '#17322a',
+        primaryTextColor: '#f3f1ec',
+        primaryBorderColor: '#2fbf8f',
+        lineColor: '#63666a',
+        secondaryColor: '#1c1e20',
+        tertiaryColor: '#17191b',
+        background: '#0c0d0e',
+        mainBkg: '#17322a',
+        nodeBorder: '#2fbf8f',
+        clusterBkg: '#141618',
+        clusterBorder: 'rgba(243,241,236,0.12)',
+        edgeLabelBackground: '#0c0d0e',
+        textColor: '#f3f1ec',
+        actorBkg: '#17322a',
+        actorBorder: '#2fbf8f',
+        actorTextColor: '#f3f1ec',
+        signalColor: '#c4c6c8',
+        signalTextColor: '#f3f1ec',
+        labelBoxBkgColor: '#17322a',
+        labelBoxBorderColor: '#2fbf8f',
+        labelTextColor: '#f3f1ec',
+        loopTextColor: '#9b9ea1',
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' },
+});
+window.addEventListener('DOMContentLoaded', () => mermaid.run());
+</script>
+"""
+html = html.replace("$mermaidjs", mermaid_leka + "$mermaidjs", 1)
+
 if "</head>" not in html:
     sys.exit("generated header has no </head>")
 html = html.replace("</head>", fonts_and_scripts, 1)

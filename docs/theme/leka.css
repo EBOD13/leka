@@ -292,3 +292,30 @@ html a:hover { border-bottom-color: var(--primary-color); }
 /* Content column: a little more breathing room beside the sidebar. */
 div.contents, div.header { padding-left: 28px; padding-right: 28px; }
 div.header { border-bottom: 1px solid var(--separator-color); padding-bottom: 14px; }
+
+/* ---------- mermaid diagrams ---------- */
+
+/*
+ * Nothing previously constrained the rendered SVG's width, so a wide
+ * flowchart rendered at its natural size and overflowed the content column
+ * (visible as the diagram bleeding past the sidebar). Themed via
+ * docs/theme/build-header.sh's own mermaid.initialize() call, which supplies
+ * themeVariables matching this palette directly -- this block only handles
+ * layout, not color.
+ */
+div.mermaidgraph {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 22px 0;
+  padding: 4px 0;
+}
+div.mermaidgraph svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+/* A diagram genuinely wider than the column scrolls horizontally in its own
+   box rather than the whole page ever scrolling sideways. */
+div.mermaidgraph::-webkit-scrollbar { height: 6px; }
+div.mermaidgraph::-webkit-scrollbar-thumb { background: var(--muted-graphite); border-radius: 3px; }

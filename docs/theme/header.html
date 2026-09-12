@@ -28,6 +28,40 @@ $treeview
 $search
 $mathjax
 $darkmode
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+        fontFamily: "'Source Sans 3', -apple-system, sans-serif",
+        primaryColor: '#17322a',
+        primaryTextColor: '#f3f1ec',
+        primaryBorderColor: '#2fbf8f',
+        lineColor: '#63666a',
+        secondaryColor: '#1c1e20',
+        tertiaryColor: '#17191b',
+        background: '#0c0d0e',
+        mainBkg: '#17322a',
+        nodeBorder: '#2fbf8f',
+        clusterBkg: '#141618',
+        clusterBorder: 'rgba(243,241,236,0.12)',
+        edgeLabelBackground: '#0c0d0e',
+        textColor: '#f3f1ec',
+        actorBkg: '#17322a',
+        actorBorder: '#2fbf8f',
+        actorTextColor: '#f3f1ec',
+        signalColor: '#c4c6c8',
+        signalTextColor: '#f3f1ec',
+        labelBoxBkgColor: '#17322a',
+        labelBoxBorderColor: '#2fbf8f',
+        labelTextColor: '#f3f1ec',
+        loopTextColor: '#9b9ea1',
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' },
+});
+window.addEventListener('DOMContentLoaded', () => mermaid.run());
+</script>
 $mermaidjs
 <link href="$relpath^$stylesheet" rel="stylesheet" type="text/css" />
 $extrastylesheet
