@@ -6,7 +6,7 @@
 <title>Leka — Order Book Replay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="viz.css">
 </head>
 <body>
@@ -16,7 +16,6 @@
     <span class="name">Leka</span>
     <span class="desc">Limit order book replay</span>
   </div>
-
   <div class="controls">
     <div class="segmented" role="tablist">
       <button class="seg active" data-mode="real" role="tab">Real</button>
@@ -32,11 +31,11 @@
   <input id="scrub" type="range" min="0" max="100" value="0" step="1" aria-label="Timeline">
   <span id="position" class="counter">—</span>
   <select id="speed" aria-label="Playback speed">
+    <option value="0.5">0.5×</option>
     <option value="1">1×</option>
-    <option value="2">2×</option>
-    <option value="4" selected>4×</option>
+    <option value="2" selected>2×</option>
+    <option value="4">4×</option>
     <option value="8">8×</option>
-    <option value="16">16×</option>
   </select>
 </div>
 
@@ -52,47 +51,57 @@
 
 <template id="panelTemplate">
   <section class="book">
-    <h2 class="title"></h2>
+    <header class="book-head">
+      <div class="ident">
+        <h2 class="title"></h2>
+        <div class="last-line">
+          <span class="last">—</span>
+          <span class="chg"></span>
+        </div>
+      </div>
+      <div class="quotes">
+        <div class="stat bid"><span class="figure bb">—</span><span class="caption">Bid</span></div>
+        <div class="stat mid"><span class="figure sp">—</span><span class="caption">Spread</span></div>
+        <div class="stat ask"><span class="figure ba">—</span><span class="caption">Ask</span></div>
+      </div>
+    </header>
 
-    <div class="quote-row">
-      <div class="stat bid">
-        <span class="figure bb">—</span>
-        <span class="caption">Bid</span>
-      </div>
-      <div class="stat mid">
-        <span class="figure sp">—</span>
-        <span class="caption">Spread</span>
-      </div>
-      <div class="stat ask">
-        <span class="figure ba">—</span>
-        <span class="caption">Ask</span>
-      </div>
-    </div>
+    <section class="chart-main">
+      <h3>Mid price <span>bid–ask band</span></h3>
+      <canvas class="price" height="230"></canvas>
+    </section>
 
     <div class="body">
-      <div class="col-depth">
-        <h3>Depth <span class="levels"></span></h3>
+      <section class="unit">
+        <h3>Book <span class="levels"></span></h3>
         <div class="ladder"></div>
-      </div>
+      </section>
 
       <div class="col-side">
         <section class="unit">
+          <h3>Market depth <span>cumulative</span></h3>
+          <canvas class="depth" height="150"></canvas>
+        </section>
+
+        <section class="unit">
           <h3>Engine latency <span class="lat-now"></span></h3>
-          <canvas class="latency" height="132"></canvas>
+          <canvas class="latency" height="118"></canvas>
           <div class="legend">
             <span class="k k50">p50</span>
             <span class="k k99">p99</span>
             <span class="k k999">p99.9</span>
           </div>
         </section>
+      </div>
 
+      <div class="col-side">
         <section class="unit">
-          <h3>Order flow</h3>
-          <canvas class="flow" height="96"></canvas>
+          <h3>Volume <span>cumulative</span></h3>
+          <canvas class="flow" height="84"></canvas>
           <div class="flowstats"></div>
         </section>
 
-        <section class="unit tape-unit">
+        <section class="unit">
           <h3>Tape</h3>
           <div class="tape"></div>
         </section>
