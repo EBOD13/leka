@@ -6,8 +6,11 @@ INTERVIEW_PREP.md
 build/
 build-*/
 
-# Market data: large, and redistribution of exchange sample data is not ours to grant
-data/
+# Market data: raw ITCH sessions are hundreds of MB and are not ours to redistribute.
+data/*
+# ...but the small interchange samples the published viewer is generated from
+# are tracked, so CI can rebuild the replay without fetching anything.
+!data/interchange/
 
 # Generated documentation
 html/

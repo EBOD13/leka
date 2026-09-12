@@ -1,4 +1,4 @@
-name: Publish Doxygen documentation
+name: Publish documentation and replay viewer
 
 on:
   push:
@@ -24,8 +24,49 @@ jobs:
       - name: Install Doxygen and Graphviz
         run: sudo apt-get update && sudo apt-get install --yes doxygen graphviz
 
-      - name: Generate documentation
+      - name: Generate API documentation
         run: doxygen Doxyfile
+
+      # The replay viewer's snapshot data is generated here rather than
+      # committed: it is a derived artifact of data/interchange/*.csv, and
+      # regenerating it on every push means the published viewer always
+      # matches the engine that produced it. snapshot_recorder captures book
+      # state *between* events, so this never touches the matching hot path
+      # (ARCH_DECISIONS.md ADR-010).
+      - name: Build the snapshot recorder
+        run: |
+          cmake -S . -B build-viz \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_SANITIZERS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_BENCHMARKS=OFF \
+            -DBUILD_TOOLS=ON
+          cmake --build build-viz --target snapshot_recorder --parallel
+
+      - name: Record replay snapshots
+        run: |
+          mkdir -p docs/viz/data
+          ./build-viz/snapshot_recorder \
+            --input  data/interchange/aapl_bx_20190730_sample.csv \
+            --output docs/viz/data/real_aapl.jsonl \
+            --label  "Real — Nasdaq BX AAPL 2019-07-30" \
+            --tick   100
+          ./build-viz/snapshot_recorder \
+            --input  data/interchange/synthetic_hawkes.csv \
+            --output docs/viz/data/synth_hawkes.jsonl \
+            --label  "Synthetic — Hawkes model" \
+            --tick   100
+          ls -lh docs/viz/data
+
+      # Publish both under one site: the API docs at the root, the viewer at
+      # /viz/. The viewer links back into the ADRs, so they must ship together.
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp -r doc/html/. _site/
+          mkdir -p _site/viz
+          cp -r docs/viz/. _site/viz/
+          echo "published:"; find _site -maxdepth 2 -name '*.html' | head
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -33,7 +74,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: doc/html
+          path: _site
 
   deploy:
     environment:

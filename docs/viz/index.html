@@ -11,87 +11,94 @@
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand">
-    <span class="logo">Leka</span>
-    <span class="tagline">low-latency limit order book &mdash; replay viewer</span>
+<header class="masthead">
+  <div class="wordmark">
+    <span class="name">Leka</span>
+    <span class="desc">Limit order book replay</span>
   </div>
-  <div class="modes">
-    <button class="mode active" data-mode="real">Real (Nasdaq BX)</button>
-    <button class="mode" data-mode="synth">Synthetic (Hawkes)</button>
-    <button class="mode" data-mode="both">Side by side</button>
-    <button class="theme-toggle" id="themeToggle" title="Toggle light / dark">◑</button>
+
+  <div class="controls">
+    <div class="segmented" role="tablist">
+      <button class="seg active" data-mode="real" role="tab">Real</button>
+      <button class="seg" data-mode="synth" role="tab">Synthetic</button>
+      <button class="seg" data-mode="both" role="tab">Compare</button>
+    </div>
+    <button class="icon-btn" id="themeToggle" title="Toggle appearance" aria-label="Toggle appearance">◑</button>
   </div>
 </header>
 
-<section class="transport">
-  <button id="playPause" class="primary">▶ Play</button>
-  <input id="scrub" type="range" min="0" max="100" value="0" step="1">
-  <span id="position" class="mono">0 / 0</span>
-  <label class="speed">
-    Speed
-    <select id="speed">
-      <option value="1">1&times;</option>
-      <option value="2">2&times;</option>
-      <option value="4" selected>4&times;</option>
-      <option value="8">8&times;</option>
-      <option value="16">16&times;</option>
-    </select>
-  </label>
-</section>
+<div class="transport">
+  <button id="playPause" class="play" aria-label="Play">▶</button>
+  <input id="scrub" type="range" min="0" max="100" value="0" step="1" aria-label="Timeline">
+  <span id="position" class="counter">—</span>
+  <select id="speed" aria-label="Playback speed">
+    <option value="1">1×</option>
+    <option value="2">2×</option>
+    <option value="4" selected>4×</option>
+    <option value="8">8×</option>
+    <option value="16">16×</option>
+  </select>
+</div>
 
-<main id="panels" class="panels"></main>
+<main id="panels"></main>
 
-<footer class="foot">
-  <p>
-    Frames are book snapshots captured <em>between</em> events by
-    <code>tools/viz/snapshot_recorder.cpp</code> &mdash; never inside
-    <code>MatchingEngine::processEvent()</code>. The latency figures below are
-    measured exactly as <code>benchmark_interchange</code> measures them.
-    See <strong>ADR-010</strong> in <code>ARCH_DECISIONS.md</code>.
-  </p>
+<footer class="colophon">
+  Snapshots are captured <em>between</em> events by <code>snapshot_recorder</code>,
+  never inside <code>MatchingEngine::processEvent()</code> — so nothing shown here
+  runs on the matching hot path. Latency is measured exactly as
+  <code>benchmark_interchange</code> measures it.
+  <a href="../md__a_r_c_h___d_e_c_i_s_i_o_n_s.html">ADR-010</a>
 </footer>
 
 <template id="panelTemplate">
-  <div class="panel">
-    <div class="panel-head">
-      <h2 class="label"></h2>
-      <div class="quotes">
-        <span class="quote bid">bid <b class="bb">—</b></span>
-        <span class="quote spread">spread <b class="sp">—</b></span>
-        <span class="quote ask">ask <b class="ba">—</b></span>
+  <section class="book">
+    <h2 class="title"></h2>
+
+    <div class="quote-row">
+      <div class="stat bid">
+        <span class="figure bb">—</span>
+        <span class="caption">Bid</span>
+      </div>
+      <div class="stat mid">
+        <span class="figure sp">—</span>
+        <span class="caption">Spread</span>
+      </div>
+      <div class="stat ask">
+        <span class="figure ba">—</span>
+        <span class="caption">Ask</span>
       </div>
     </div>
 
-    <div class="grid">
-      <div class="card ladder-card">
-        <h3>Depth ladder <small class="levels"></small></h3>
+    <div class="body">
+      <div class="col-depth">
+        <h3>Depth <span class="levels"></span></h3>
         <div class="ladder"></div>
       </div>
 
-      <div class="card">
-        <h3>Engine latency <small>rolling percentiles, ns (log)</small></h3>
-        <canvas class="latency" width="520" height="190"></canvas>
-        <div class="legend">
-          <span class="k k50">p50</span>
-          <span class="k k99">p99</span>
-          <span class="k k999">p99.9</span>
-          <span class="lat-now mono"></span>
-        </div>
-      </div>
+      <div class="col-side">
+        <section class="unit">
+          <h3>Engine latency <span class="lat-now"></span></h3>
+          <canvas class="latency" height="132"></canvas>
+          <div class="legend">
+            <span class="k k50">p50</span>
+            <span class="k k99">p99</span>
+            <span class="k k999">p99.9</span>
+          </div>
+        </section>
 
-      <div class="card">
-        <h3>Order flow <small>cumulative</small></h3>
-        <canvas class="flow" width="520" height="140"></canvas>
-        <div class="flowstats mono"></div>
-      </div>
+        <section class="unit">
+          <h3>Order flow</h3>
+          <canvas class="flow" height="96"></canvas>
+          <div class="flowstats"></div>
+        </section>
 
-      <div class="card">
-        <h3>Trade tape <small>most recent first</small></h3>
-        <div class="tape"></div>
+        <section class="unit tape-unit">
+          <h3>Tape</h3>
+          <div class="tape"></div>
+        </section>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script src="viz.js"></script>

@@ -38,7 +38,7 @@ class Panel {
     this.frames = data.frames;
     this.tape = [];
 
-    root.querySelector('.label').textContent = this.meta.label;
+    root.querySelector('.title').textContent = this.meta.label;
     this.el = {
       bb: root.querySelector('.bb'),
       ba: root.querySelector('.ba'),
@@ -84,7 +84,7 @@ class Panel {
     this.el.bb.textContent = f.bb ? px(f.bb) : '—';
     this.el.ba.textContent = f.ba ? px(f.ba) : '—';
     this.el.sp.textContent = (f.bb && f.ba) ? px(f.ba - f.bb) : '—';
-    this.el.levels.textContent = `${f.nb} bid / ${f.na} ask levels`;
+    this.el.levels.textContent = `${f.nb}×${f.na}`;
   }
 
   renderLadder(f) {
@@ -102,15 +102,15 @@ class Panel {
       return `<div class="lrow ${side}">
           <span class="px">${px(price)}</span>
           <span class="bar"><span class="fill" style="width:${w.toFixed(1)}%"></span></span>
-          <span class="qty">${commas(qty)}${orders > 1 ? `·${orders}` : ''}</span>
+          <span class="qty">${commas(qty)}</span>
         </div>`;
     };
 
     const asks = f.asks.slice().reverse().map(l => row(l, 'a')).join('');
     const bids = f.bids.map(l => row(l, 'b')).join('');
     const spread = (f.bb && f.ba)
-      ? `<div class="spreadrow">spread ${px(f.ba - f.bb)}</div>`
-      : `<div class="spreadrow">one-sided book</div>`;
+      ? `<div class="spreadrow">${px(f.ba - f.bb)} spread</div>`
+      : `<div class="spreadrow">one-sided</div>`;
 
     this.el.ladder.innerHTML =
       (asks || '<div class="empty">no resting asks</div>') +
@@ -124,8 +124,10 @@ class Panel {
   }
 
   renderLatency(idx) {
-    const c = this.el.latency, ctx = c.getContext('2d');
-    const w = c._w, h = c._h, pad = 4;
+    const c = this.el.latency;
+    this.fitCanvas(c);
+    const ctx = c.getContext('2d');
+    const w = c._w, h = c._h, pad = 2;
     ctx.clearRect(0, 0, w, h);
 
     const window = 240;
@@ -147,15 +149,15 @@ class Panel {
     const x = i => pad + (i / Math.max(1, slice.length - 1)) * (w - pad * 2);
 
     // gridlines at decade boundaries
-    ctx.strokeStyle = this.token('--dark-slate');
+    ctx.strokeStyle = this.token('--rail');
     ctx.lineWidth = 1;
     ctx.fillStyle = this.token('--subtle-text');
-    ctx.font = "9px 'JetBrains Mono', ui-monospace, monospace";
+    ctx.font = "8.5px 'JetBrains Mono', ui-monospace, monospace";
     for (let d = Math.ceil(lo); d <= Math.floor(hi); d++) {
       const yy = y(Math.pow(10, d));
       ctx.beginPath(); ctx.moveTo(pad, yy); ctx.lineTo(w - pad, yy); ctx.stroke();
       const v = Math.pow(10, d);
-      ctx.fillText(v >= 1000 ? `${v / 1000}µs` : `${v}ns`, pad + 2, yy - 2);
+      ctx.fillText(v >= 1000 ? `${v / 1000}µs` : `${v}ns`, pad + 1, yy - 3);
     }
 
     // NEW_REST is the representative resting-order path; drawing every event
@@ -167,7 +169,7 @@ class Panel {
     ];
     for (const s of series) {
       ctx.strokeStyle = s.color;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
       let started = false;
       slice.forEach((f, i) => {
@@ -187,8 +189,10 @@ class Panel {
   }
 
   renderFlow(idx, f) {
-    const c = this.el.flow, ctx = c.getContext('2d');
-    const w = c._w, h = c._h, pad = 4;
+    const c = this.el.flow;
+    this.fitCanvas(c);
+    const ctx = c.getContext('2d');
+    const w = c._w, h = c._h, pad = 2;
     ctx.clearRect(0, 0, w, h);
 
     const slice = this.frames.slice(0, idx + 1);
@@ -197,7 +201,7 @@ class Panel {
     const y = v => h - pad - (v / maxV) * (h - pad * 2);
 
     const line = (get, color) => {
-      ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.beginPath();
+      ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.beginPath();
       slice.forEach((s, i) => i ? ctx.lineTo(x(i), y(get(s))) : ctx.moveTo(x(i), y(get(s))));
       ctx.stroke();
     };
@@ -205,13 +209,15 @@ class Panel {
     line(s => s.flow.sellQty, this.token('--sell'));
 
     const fl = f.flow;
+    const cell = (label, value, colour) =>
+      `<div><b${colour ? ` style="color:${colour}"` : ''}>${commas(value)}</b>${label}</div>`;
     this.el.flowStats.innerHTML =
-      `<span>buy vol <b style="color:var(--antique-gold)">${commas(fl.buyQty)}</b></span>` +
-      `<span>sell vol <b style="color:var(--sell)">${commas(fl.sellQty)}</b></span>` +
-      `<span>new <b>${commas(fl.new)}</b></span>` +
-      `<span>cancel <b>${commas(fl.cancel)}</b></span>` +
-      `<span>reduce <b>${commas(fl.reduce)}</b></span>` +
-      `<span>trades <b>${commas(fl.trades)}</b></span>`;
+      cell('buy volume', fl.buyQty, 'var(--antique-gold)') +
+      cell('sell volume', fl.sellQty, 'var(--sell)') +
+      cell('trades', fl.trades) +
+      cell('new', fl.new) +
+      cell('cancel', fl.cancel) +
+      cell('reduce', fl.reduce);
   }
 
   renderTape(f, idx) {
@@ -295,8 +301,9 @@ function seek(i) {
     p.render(scaled);
   }
   const f = panels[0] && panels[0].frames[Math.min(cursor, panels[0].frames.length - 1)];
-  positionEl.textContent = `${commas(cursor + 1)} / ${commas(frameCount)}` +
-    (f ? ` · ${commas(f.seq)} events` : '');
+  positionEl.textContent = f
+    ? `${commas(f.seq)} events · frame ${commas(cursor + 1)}/${commas(frameCount)}`
+    : `${commas(cursor + 1)} / ${commas(frameCount)}`;
 }
 
 function tick() {
@@ -307,13 +314,13 @@ function tick() {
 function play() {
   if (playing) return;
   playing = true;
-  playBtn.textContent = '❚❚ Pause';
+  playBtn.textContent = '❚❚';
   timer = setInterval(tick, Math.max(8, 100 / Number(speedEl.value)));
 }
 
 function stop() {
   playing = false;
-  playBtn.textContent = '▶ Play';
+  playBtn.textContent = '▶';
   if (timer) { clearInterval(timer); timer = null; }
 }
 
@@ -321,9 +328,9 @@ playBtn.addEventListener('click', () => (playing ? stop() : play()));
 scrub.addEventListener('input', e => { stop(); seek(Number(e.target.value)); });
 speedEl.addEventListener('change', () => { if (playing) { stop(); play(); } });
 
-document.querySelectorAll('.mode').forEach(btn => {
+document.querySelectorAll('.seg').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.mode').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.seg').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     setMode(btn.dataset.mode);
   });
@@ -345,6 +352,12 @@ themeToggle.addEventListener('click', () => {
     localStorage.setItem('leka-theme', 'light');
   }
   seek(cursor); // canvases sample the tokens at draw time
+});
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => seek(cursor), 120);
 });
 
 setMode('real');
