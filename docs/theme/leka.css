@@ -9,7 +9,8 @@
  * corrections. Nothing re-implements doxygen-awesome's layout.
  */
 
-html {
+html,
+html.dark-mode {
   /* accent */
   --primary-color: #2fbf8f;
   --primary-dark-color: #23a67a;
@@ -72,7 +73,8 @@ html.dark-mode { color-scheme: dark; }
 
 /* Light mode flips the token values; the accent deepens rather than changing
    hue, matching the viewer's behaviour. */
-html.light-mode {
+html.light-mode,
+html.light-mode body {
   --primary-color: #046c4e;
   --primary-dark-color: #035939;
   --primary-light-color: #0f8c66;
@@ -104,16 +106,17 @@ html.light-mode {
 
 /* ---------- typography ---------- */
 
-body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+html body { font-family: var(--font-family); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-h1, h2, h3, h4, .title {
+html h1, html h2, html h3, html h4, html .title,
+div.header .title {
   font-family: 'Playfair Display', Georgia, serif;
   font-weight: 500;
   letter-spacing: -0.012em;
 }
-h1, .title { font-size: 1.9rem; line-height: 1.25; }
-h2 { font-size: 1.42rem; line-height: 1.3; margin-top: 2.4em; }
-h3 { font-size: 1.12rem; margin-top: 1.9em; }
+html h1, div.header .title { font-size: 1.9rem; line-height: 1.25; }
+html h2 { font-size: 1.42rem; line-height: 1.3; margin-top: 2.4em; }
+html h3 { font-size: 1.12rem; margin-top: 1.9em; }
 
 /* Doxygen renders markdown headings with a trailing anchor-permalink; keep it
    from adding stray underline artifacts to serif headings. */
@@ -125,7 +128,7 @@ h1 a, h2 a, h3 a { border-bottom: 0 !important; }
  * headings were rewritten as prose, but <tt> still appears in body text from
  * Doxygen's own output, so it is styled to match inline <code>.
  */
-tt, code, .tt {
+html tt, html code, html .tt, html span.tt {
   font-family: var(--font-family-monospace);
   font-size: 0.88em;
   background: var(--code-background);
@@ -181,10 +184,10 @@ table.markdownTable td, table.doxtable td {
 table.markdownTable tr:hover td, table.doxtable tr:hover td { background: var(--odd-color); }
 
 /* Horizontal rules between ADRs: a hairline, not a groove. */
-hr { border: 0; border-top: 1px solid var(--separator-color); margin: 3.2em 0; }
+html hr { border: 0; border-top: 1px solid var(--separator-color); margin: 3.2em 0; }
 
 /* Blockquotes: a single accent rule rather than a filled box. */
-blockquote {
+html blockquote {
   background: transparent;
   border: 0;
   border-left: 2px solid var(--primary-color);
@@ -203,8 +206,8 @@ blockquote p { margin: 0.35em 0; }
 #projectbrief { color: var(--page-secondary-foreground-color); font-weight: 300; }
 
 /* Links: underline on hover only, so prose stays calm. */
-a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .18s ease; }
-a:hover { border-bottom-color: var(--primary-color); }
+html a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .18s ease; }
+html a:hover { border-bottom-color: var(--primary-color); }
 .contents a.el { font-weight: 500; }
 
 /* Lists: a little more air between items in long ADR prose. */
@@ -227,3 +230,65 @@ a:hover { border-bottom-color: var(--primary-color); }
   white-space: nowrap;
 }
 #leka-viz-link:hover { background: var(--primary-dark-color); border-bottom: 0 !important; }
+
+/* ---------- sidebar and title block ---------- */
+
+/*
+ * The stock title block sits in a bordered box that reads as a stray card
+ * against a flat sidebar. Flatten it and let the hairline under the whole
+ * sidebar header do the separating instead.
+ */
+#titlearea {
+  border: 0 !important;
+  background: transparent;
+  padding: 22px 20px 4px;
+}
+#titlearea table, #titlearea tbody, #titlearea tr, #titlearea td { border: 0 !important; }
+#projectname {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-size: 25px !important;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+#projectbrief {
+  font-family: var(--font-family) !important;
+  font-size: 12.8px !important;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--page-secondary-foreground-color);
+  padding-top: 5px;
+  max-width: 30ch;
+}
+
+#leka-viz-wrap { padding: 14px 20px 18px; border-bottom: 1px solid var(--separator-color); }
+#leka-viz-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 14px;
+  border-radius: var(--border-radius-medium);
+  background: var(--primary-color); color: var(--on-primary-color) !important;
+  font-family: var(--font-family); font-size: 12.5px; font-weight: 600;
+  letter-spacing: 0.015em; border-bottom: 0 !important;
+  white-space: nowrap; transition: background .18s ease;
+}
+#leka-viz-link:hover { background: var(--primary-dark-color); border-bottom: 0 !important; }
+
+/* Sidebar: flat, hairline on the right edge only. */
+#side-nav {
+  background: var(--side-nav-background) !important;
+  border-right: 1px solid var(--separator-color);
+}
+#nav-tree { background: transparent !important; padding-top: 10px; }
+#nav-tree .item > a, #nav-tree a {
+  font-family: var(--font-family);
+  font-size: var(--navigation-font-size);
+  color: var(--side-nav-foreground);
+}
+#nav-tree .selected, #nav-tree a:hover { color: var(--primary-color) !important; }
+#nav-tree .selected { background: transparent !important; }
+#nav-sync { display: none; }
+.ui-resizable-e { background: transparent; border-right: 1px solid var(--separator-color); width: 1px; }
+
+/* Content column: a little more breathing room beside the sidebar. */
+div.contents, div.header { padding-left: 28px; padding-right: 28px; }
+div.header { border-bottom: 1px solid var(--separator-color); padding-bottom: 14px; }

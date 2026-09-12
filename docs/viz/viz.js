@@ -54,6 +54,7 @@ class Panel {
       latNow: q('.lat-now'),
       flowStats: q('.flowstats'),
       tape: q('.tape'),
+      tip: q('.price-tip'),
     };
 
     // Fixed CSS height per canvas, captured once from the markup. fitCanvas
@@ -63,6 +64,8 @@ class Panel {
     for (const c of [this.el.price, this.el.depth, this.el.latency, this.el.flow]) {
       c._cssH = c.height;
     }
+    this._hoverFrame = null;
+    this.attachHover();
   }
 
   /** Sizes the backing store for devicePixelRatio. Safe to call every frame. */
@@ -102,6 +105,7 @@ class Panel {
     const idx = Math.min(i, this.frames.length - 1);
     const f = this.frames[idx];
     if (!f) return;
+    this._lastRenderIdx = idx;
     this.renderQuotes(f, idx);
     this.renderPrice(idx);
     this.renderDepth(f);
@@ -165,6 +169,10 @@ class Panel {
 
     const x = i => padL + ((i - from) / Math.max(1, idx - from)) * (w - padL - padR);
     const y = v => padT + (1 - (v - lo) / (hi - lo)) * (h - padT - padB);
+
+    // Kept so the pointer handler can invert x -> frame without recomputing
+    // the window, and draw the crosshair in the same coordinate space.
+    this._priceGeom = { from, idx, lo, hi, padL, padR, padT, padB, w, h, pts };
 
     const accent = this.token('--antique-gold');
 
@@ -238,6 +246,91 @@ class Panel {
     ctx.fill();
     ctx.fillStyle = this.token('--ink-strong');
     ctx.fillText(tag, w - padR + 9.5, ly + 3.5);
+
+    if (this._hoverFrame != null) this.drawCrosshair(ctx);
+  }
+
+  /** Vertical rule plus bid/ask dots at the hovered frame. */
+  drawCrosshair(ctx) {
+    const g = this._priceGeom;
+    if (!g) return;
+    const hit = g.pts.find(p => p.i === this._hoverFrame);
+    if (!hit) return;
+    const x = i => g.padL + ((i - g.from) / Math.max(1, g.idx - g.from)) * (g.w - g.padL - g.padR);
+    const y = v => g.padT + (1 - (v - g.lo) / (g.hi - g.lo)) * (g.h - g.padT - g.padB);
+    const hx = x(hit.i);
+
+    ctx.save();
+    ctx.strokeStyle = this.alpha(this.token('--ivory-text'), 0.28);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(hx, g.padT); ctx.lineTo(hx, g.h - g.padB); ctx.stroke();
+    for (const [v, colour] of [[hit.ask, this.token('--sell')], [hit.bid, this.token('--antique-gold')]]) {
+      ctx.beginPath(); ctx.arc(hx, y(v), 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = colour; ctx.fill();
+      ctx.strokeStyle = this.token('--obsidian'); ctx.lineWidth = 1.4; ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /**
+   * Maps a pointer position to the nearest plotted frame and fills the
+   * readout. Hovering reads from the already-rendered window, so it costs
+   * nothing beyond a redraw of the price canvas.
+   */
+  attachHover() {
+    const c = this.el.price, box = this.el.tip;
+    if (!c || !box) return;
+
+    const move = ev => {
+      const g = this._priceGeom;
+      if (!g || !g.pts.length) return;
+      const r = c.getBoundingClientRect();
+      const px_ = ev.clientX - r.left;
+      const span = g.w - g.padL - g.padR;
+      const t = Math.max(0, Math.min(1, (px_ - g.padL) / Math.max(1, span)));
+      const want = g.from + t * Math.max(1, g.idx - g.from);
+
+      let best = g.pts[0];
+      for (const p of g.pts) if (Math.abs(p.i - want) < Math.abs(best.i - want)) best = p;
+      this._hoverFrame = best.i;
+
+      const f = this.frames[best.i];
+      const spread = best.ask - best.bid;
+      box.innerHTML =
+        `<div class="tip-time">${this.clockOf(f)}</div>` +
+        `<div class="tip-row"><span>Ask</span><b class="a">${best.ask.toFixed(2)}</b></div>` +
+        `<div class="tip-row"><span>Bid</span><b class="b">${best.bid.toFixed(2)}</b></div>` +
+        `<div class="tip-row"><span>Spread</span><b>${spread.toFixed(2)}</b></div>` +
+        `<div class="tip-row"><span>Mid</span><b>${best.mid.toFixed(2)}</b></div>` +
+        `<div class="tip-foot">${commas(f.seq)} events</div>`;
+      box.style.display = 'block';
+      // Flip to the other side of the cursor near the right edge so the box
+      // never runs off the panel.
+      const boxW = box.offsetWidth || 128;
+      const left = px_ + 14 + boxW > g.w ? px_ - boxW - 14 : px_ + 14;
+      box.style.left = Math.max(0, left) + 'px';
+      box.style.top = '10px';
+
+      this.renderPrice(this._lastRenderIdx ?? g.idx);
+    };
+
+    c.addEventListener('mousemove', move);
+    c.addEventListener('mouseleave', () => {
+      this._hoverFrame = null;
+      box.style.display = 'none';
+      this.renderPrice(this._lastRenderIdx ?? 0);
+    });
+  }
+
+  /** ts_ns is nanoseconds since midnight exchange time. */
+  clockOf(f) {
+    if (!f || !f.ts) return '';
+    const s = Math.floor(f.ts / 1e9);
+    const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    const ms = String(Math.floor((f.ts % 1e9) / 1e6)).padStart(3, '0');
+    return `${hh}:${mm}:${ss}.${ms}`;
   }
 
   /**

@@ -31,7 +31,9 @@ $darkmode
 $mermaidjs
 <link href="$relpath^$stylesheet" rel="stylesheet" type="text/css" />
 $extrastylesheet
-<link href="$relpath^doxygen-awesome.css" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script type="text/javascript" src="$relpath^doxygen-awesome-darkmode-toggle.js"></script>
 <script type="text/javascript" src="$relpath^doxygen-awesome-fragment-copy-button.js"></script>
 <script type="text/javascript" src="$relpath^doxygen-awesome-paragraph-link.js"></script>
@@ -42,9 +44,6 @@ $extrastylesheet
     DoxygenAwesomeParagraphLink.init()
     DoxygenAwesomeInteractiveToc.init()
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 <!--BEGIN FULL_SIDEBAR-->
@@ -92,7 +91,5 @@ $extrastylesheet
 </table>
 </div>
 <!--END TITLEAREA-->
-<div style="padding:0 var(--spacing-large) var(--spacing-medium);">
-  <a id="leka-viz-link" href="$relpath^viz/">▶ Replay viewer</a>
-</div>
+<div id="leka-viz-wrap"><a id="leka-viz-link" href="$relpath^viz/">&#9654; Replay viewer</a></div>
 <!-- end header part -->

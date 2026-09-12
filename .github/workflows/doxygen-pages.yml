@@ -17,12 +17,32 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DOXYGEN_VERSION: 1.18.0
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Doxygen and Graphviz
-        run: sudo apt-get update && sudo apt-get install --yes doxygen graphviz
+      # Doxygen is pinned to the same version used locally rather than taken
+      # from apt. Ubuntu ships 1.9.8, and the version skew is not cosmetic:
+      # CASE_SENSE_NAMES resolves differently per platform (breaking generated
+      # filenames and every link to them), the header template carries
+      # version-specific placeholders that an older Doxygen emits as literal
+      # text, and Mermaid support does not exist before 1.10 so every diagram
+      # renders as raw source. Pinning removes that entire class of problem.
+      - name: Install pinned Doxygen and Graphviz
+        run: |
+          sudo apt-get update && sudo apt-get install --yes graphviz
+          curl -fsSL "https://www.doxygen.nl/files/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz" \
+            -o /tmp/doxygen.tar.gz
+          sudo tar -xzf /tmp/doxygen.tar.gz -C /opt
+          sudo ln -sf "/opt/doxygen-${DOXYGEN_VERSION}/bin/doxygen" /usr/local/bin/doxygen
+          doxygen --version
+
+      # Regenerated with the same Doxygen that consumes it, so the template's
+      # placeholders always match.
+      - name: Regenerate the documentation header
+        run: bash docs/theme/build-header.sh
 
       - name: Generate API documentation
         run: doxygen Doxyfile
