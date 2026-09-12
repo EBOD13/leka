@@ -9,6 +9,12 @@ The current implementation is a single-instrument core engine. Application,
 HTTP, JSON, WebSocket, database, and frontend concerns are intentionally
 outside the core library.
 
+See [ARCH_DECISIONS.md](ARCH_DECISIONS.md) for the hot-path design decisions —
+the event model's move away from an in-place `MODIFY`, the tick-indexed
+`PriceLadder` that replaced `std::map<Price, PriceLevel>`, and the measured
+before/after latency for both — with the reasoning and the numbers behind
+each.
+
 ```mermaid
 flowchart LR
 	Caller[API caller or test] --> Events[OrderEvent]
@@ -35,7 +41,7 @@ The implemented core supports:
 - Limit-order remainders
 - Market orders that never rest
 - Cancellation by `OrderId`
-- Event-first `NEW`, `CANCEL`, and `MODIFY` dispatch
+- Event-first `NEW`, `CANCEL`, and `REDUCE` dispatch
 - Deterministic sequence numbers
 - Average O(1) order-ID lookup
 - Intrusive O(1) removal of a known order from a price level
@@ -55,12 +61,10 @@ flowchart TB
 	Event[OrderEvent] --> Type{event_type}
 	Type -->|NEW| New[Validate order]
 	Type -->|CANCEL| Cancel[Find OrderId]
-	Type -->|MODIFY| Modify[Find OrderId]
+	Type -->|REDUCE| Reduce[Find OrderId]
 	New --> Match[Match by price and time]
 	Cancel --> Remove[Remove from OrderBook]
-	Modify --> Compare[Compare price and quantity]
-	Compare --> Keep[Decrease in place]
-	Compare --> Requeue[Remove and reinsert]
+	Reduce --> Keep[Shrink in place, priority kept]
 ```
 
 The operation is selected before its payload is interpreted. A `CANCEL` does
@@ -75,13 +79,17 @@ engine.processEvent(OrderEvent{NewOrder{
 
 engine.processEvent(OrderEvent{CancelOrder{orderId}});
 
-engine.processEvent(OrderEvent{ModifyOrder{
-		orderId, newPrice, newQuantity
-}});
+engine.processEvent(OrderEvent{ReduceOrder{orderId, newQuantity}});
 ```
 
 `processOrder(const OrderEvent&)` is also available as an alias. `NEW` events
-return executions. `CANCEL` and `MODIFY` events return an empty execution list.
+return executions. `CANCEL` and `REDUCE` events return an empty execution list.
+
+There is no in-place modify. On a price-time-priority venue a reprice or a
+size increase always forfeits queue position, so it is submitted as a `CANCEL`
+followed by a `NEW`. That also routes the replacement through the matcher, so
+repricing an order through the opposite side trades instead of leaving the
+book crossed. `REDUCE` is the only change that preserves time priority.
 
 ### NEW
 
@@ -105,44 +113,48 @@ order type, price, or quantity. Cancellation uses the order index, unlinks the
 order from its price-level FIFO, removes the index entry, and releases the
 pooled order storage.
 
-### MODIFY
+### REDUCE
 
-The `MODIFY` payload contains:
+The `REDUCE` payload contains:
 
 - `OrderId`
-- `newPrice`
 - `newQuantity`
 
-Modification applies to an existing resting limit order. The engine compares
-the requested values with the current order before deciding whether the order
-can remain in place or must be requeued.
+Reduction shrinks a resting limit order in place. The price cannot change, so
+the order never moves between levels: it keeps its FIFO position, its sequence
+number, and its timestamp, and only the order's remaining quantity and the
+price-level aggregate are updated. An absent `OrderId` is a no-op rather than
+an error, because a replayed feed may reference an order that was already
+resting before the captured window began.
 
 ## Leka V1 priority semantics
 
-**Leka V1 uses Nasdaq-style price/time modification semantics for ordinary
-displayed limit orders.** Exact rules vary by venue; this is the explicit
-policy implemented by Leka V1.
+**Leka V1 uses Nasdaq-style price/time priority for ordinary displayed limit
+orders.** Exact rules vary by venue; this is the explicit policy implemented
+by Leka V1.
 
-| Modification | Priority | Current behavior |
+| Change | Priority | How it is expressed |
 | --- | --- | --- |
-| Decrease quantity at the same price | Preserved | Update the order in place and reduce the price-level aggregate. |
-| Increase quantity | Reset | Remove and reinsert at the FIFO tail with a new sequence number. |
-| Change price | Reset | Move to the new price level and assign a new sequence number. |
-| Change price and quantity | Reset | Reinsert using the new price and quantity. |
-| No effective change | Preserved | Treat the event as a no-op. |
+| Decrease quantity at the same price | Preserved | `REDUCE`, updated in place. |
+| Increase quantity | Reset | `CANCEL` then `NEW`, joining the FIFO tail. |
+| Change price | Reset | `CANCEL` then `NEW`, matched on entry. |
+| Change price and quantity | Reset | `CANCEL` then `NEW`. |
+| No effective change | Preserved | `REDUCE` to the current quantity is a no-op. |
+
+Encoding priority-resetting changes as two events is what the venue itself
+does. Nasdaq TotalView-ITCH has no in-place modify: an `X` message shrinks an
+order and keeps its priority, while a `U` replace retires the original
+`order_ref` and issues a new one at the back of the queue. Leka's `REDUCE` and
+`CANCEL`+`NEW` map onto those one-for-one.
 
 For a partially executed order, `newQuantity` refers to its current remaining
-quantity. A priority-reset modification recreates the resting representation
-with the requested quantity.
+quantity.
 
 ```mermaid
 flowchart LR
-	Request[MODIFY] --> SamePrice{Same price?}
-	SamePrice -->|Yes| Quantity{New quantity}
-	Quantity -->|Lower| Preserve[Update in place<br/>Preserve sequence]
-	Quantity -->|Same| NoOp[No-op<br/>Preserve sequence]
-	Quantity -->|Higher| Reset[Remove and reinsert<br/>New sequence]
-	SamePrice -->|No| Reset
+	Request[Change to a resting order] --> Kind{Same price and smaller?}
+	Kind -->|Yes| Reduce[REDUCE<br/>Shrink in place<br/>Priority preserved]
+	Kind -->|No| Replace[CANCEL then NEW<br/>Matched on entry<br/>Priority reset]
 ```
 
 ## Matching behavior
@@ -202,13 +214,16 @@ removal of a known order without allocating a separate list node.
 
 ### Order index
 
-`OrderIndex` stores:
+`OrderIndex` is a hand-rolled open-addressed hash table (linear probing,
+backward-shift deletion, `OrderId{0}`'s reserved-invalid status doubling as
+the empty-slot sentinel) mapping `OrderId -> Order*` in one contiguous
+`std::vector<Slot>`, not `std::unordered_map`. See
+[ARCH_DECISIONS.md](ARCH_DECISIONS.md) (ADR-006) for why: this lookup runs on
+every `NEW`, `CANCEL`, `REDUCE`, and fill, so it is the hottest lookup in the
+engine, and a chained hash table pays a per-entry node allocation and a
+pointer chase that a flat probe sequence does not.
 
-```cpp
-std::unordered_map<OrderId, Order*>
-```
-
-This gives average O(1) lookup for cancellation and modification. The index,
+This gives average O(1) lookup for cancellation and reduction. The index,
 price-level queues, and order pool are updated together by `OrderBook`.
 
 ### Order pool
@@ -231,71 +246,90 @@ to record deterministic engine processing order. Sequence numbers support
 price-time ordering, replay-oriented determinism, debugging, and tests.
 
 Accepted `NEW` orders receive a sequence number even when they are fully
-executed or are market orders that do not rest. Valid cancellation events do
-not allocate a new sequence number. A priority-reset modification receives a
-new sequence number; a quantity decrease and no-op modification retain the
-existing sequence number.
+executed or are market orders that do not rest. `NEW` is the only event that
+allocates one: `CANCEL` and `REDUCE` cannot change an order's queue position,
+so there is nothing for a new sequence number to express. A priority-resetting
+change is a `CANCEL` followed by a `NEW`, and the sequence number comes from
+that `NEW`.
 
 Invalid `NEW` inputs and duplicate order IDs are rejected before allocating a
-sequence number. Sequence behavior for invalid `MODIFY` input remains an area
-for hardening before this engine is used as a production component.
+sequence number.
 
 ## Current project structure
 
 ```text
 include/lob/
-	book/       OrderBook, PriceLevel, OrderPool
-	index/      OrderIndex
-	matching/   MatchingEngine, Execution, sequence generator
-	order/      Order, sides, types, OrderEvent
-	types/      OrderId, Price, Quantity, Timestamp, SequenceNumber
+	book/         OrderBook, PriceLadder, PriceLevel, OrderPool
+	concurrency/  SpscEventQueue (feed-handler / matching-thread handoff)
+	index/        OrderIndex (open-addressed, backward-shift deletion)
+	matching/     MatchingEngine, Execution, sequence generator
+	order/        Order, sides, types, OrderEvent
+	types/        OrderId, Price, Quantity, Timestamp, SequenceNumber
 src/
-	book/ index/ matching/ order/
-tests/unit/
+	book/ concurrency/ index/ matching/ order/
+tests/
+	unit/         Order, PriceLevel, OrderBook, MatchingEngine
+	integration/  a full trading-session scenario end to end
+	stress/       randomized differential test (OrderIndex), two-thread
+	              correctness test (SpscEventQueue)
 benchmarks/
+	benchmark_main.cpp          synthetic, seeded, percentile latency
+tools/
+	itch/         ITCH 5.0 -> CSV, and a real-data replay + validation tool
+	benchmark/    interchange-schema CSV replay + percentile latency
+	concurrency/  two-thread feed-handler/matching pipeline, measured
 cmake/
 ```
 
-The repository also contains placeholder directories and files for future
-market-data, application, UI, integration-test, stress-test, and workload
-generation work. They are not part of the current CMake build.
+`apps/`, `market_data`, `order_book_snapshot` remain placeholder stubs —
+application, HTTP/JSON, and live-snapshot concerns intentionally outside the
+core library for now, not yet built.
+
+See [ARCH_DECISIONS.md](ARCH_DECISIONS.md) for the full decision trail with
+measured before/after numbers for everything below.
 
 ## Testing status
 
-The current CMake configuration builds and registers two test executables:
+Seven executables are built and registered with CTest: `test_order_book`,
+`test_matching_engine`, `test_order`, `test_price_level`, `test_trade_flow`
+(the integration scenario), `test_randomized_operations` (20,000-operation
+differential test of `OrderIndex` against a `std::unordered_map` oracle,
+re-verifying the entire live set after every operation), and
+`test_spsc_queue` (two real OS threads, 2,000,000 events through a
+1,024-capacity queue, exact FIFO order verified).
 
-- `test_order_book`
-- `test_matching_engine`
-
-The tests cover empty and non-empty books, crossing and non-crossing limit
-orders, market orders, full and partial executions, FIFO behavior, remainders,
-duplicate IDs, invalid market prices, cancellation, pool slot reuse, sequence
-monotonicity, and event-based cancel/modify priority behavior.
-
-Integration and randomized stress test files exist as placeholders but are not
-currently implemented or registered with CTest. GoogleTest is not currently a
-project dependency; the existing tests use standard C++ assertions.
+All seven pass clean under AddressSanitizer + UndefinedBehaviorSanitizer.
+`test_spsc_queue` additionally passes clean under ThreadSanitizer in a
+separate configuration (ASan and TSan cannot share a binary) — this is not
+a formality: an earlier version of the concurrency benchmark tool had a real
+data race that TSan caught on the first run (ADR-009).
 
 ## Benchmarking status
 
-The current benchmark executable runs a 100,000-iteration add/cancel workload
-and reports total nanoseconds and average nanoseconds per order. It does not
-currently report p50, p95, p99, or p99.9 latency distributions.
+Two percentile-reporting (p50/p90/p99/p99.9/max, never a mean) benchmarks
+exist:
 
-Performance work should follow:
+- `benchmark_order_book` — synthetic, seeded, mixed resting/crossing/cancel
+  workload across 2,000 price levels per side.
+- `tools/benchmark/benchmark_interchange` — replays a real or synthetic
+  event log in the generic interchange CSV schema, auto-sizing the book
+  from the file's own observed price range.
+- `tools/concurrency/threaded_replay_benchmark` — the same replay, split
+  across a feed-handler thread and a matching thread via `SpscEventQueue`,
+  reporting hand-off latency alongside per-event-type matching latency.
 
-```text
-Correctness -> baseline -> measure -> profile -> optimize -> measure again
-```
-
-The current benchmark is an early local baseline, not a portable performance
-claim. Results depend on hardware, compiler, build flags, and system load.
+Results depend on hardware, compiler, build flags, and system load; the
+specific numbers in ARCH_DECISIONS.md were measured in Release, without
+sanitizers, and are reproducible via the commands there, not quoted as
+portable absolutes.
 
 ## Sanitizers
 
-When `ENABLE_SANITIZERS=ON`, the CMake configuration enables AddressSanitizer
-and UndefinedBehaviorSanitizer for the core library, tests, and benchmark
-target on Clang and GCC-compatible toolchains.
+`ENABLE_SANITIZERS=ON` enables AddressSanitizer + UndefinedBehaviorSanitizer
+across the core library, tests, benchmarks, and tools. `ENABLE_TSAN=ON`
+enables ThreadSanitizer for the concurrency-specific targets instead; the
+two options are mutually exclusive in one configure (CMake will refuse both
+at once) and are meant to be run as two separate passes.
 
 ## Build and test
 
@@ -304,7 +338,7 @@ Requirements:
 - C++20 compiler
 - CMake 3.20 or newer
 
-Build and run the current tests:
+Build and run the tests:
 
 ```sh
 cmake -S . -B build
@@ -312,7 +346,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-Build with sanitizers:
+Build with ASan/UBSan:
 
 ```sh
 cmake -S . -B build-sanitize -DENABLE_SANITIZERS=ON
@@ -320,32 +354,33 @@ cmake --build build-sanitize
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
-Run the benchmark:
+Build with ThreadSanitizer (separate pass, not combined with the above):
+
+```sh
+cmake -S . -B build-tsan -DENABLE_TSAN=ON
+cmake --build build-tsan
+./build-tsan/test_spsc_queue
+```
+
+Run the benchmarks:
 
 ```sh
 ./build/benchmark_order_book
+./build/benchmark_interchange --input path/to/interchange.csv
+./build/threaded_replay_benchmark path/to/interchange.csv
 ```
 
 ## Planned work
 
-The following items are planned rather than implemented in the current core:
-
-- Integration and randomized stress testing
-- Mixed-operation and million-operation benchmarks
-- Latency percentile reporting
-- CPU and hot-path profiling
-- Time-in-force semantics
-- Multiple instruments
-- Market-data adapters and historical replay
-- Databento MBO integration
-- Synthetic stochastic order-flow generation
-- Calibration against real market microstructure
-- CLI, server, and UI integration
-
-An MBO adapter should remain separate from the internal order-event interface:
-an exchange `ADD`, `CANCEL`, `MODIFY`, `TRADE`, or `CLEAR` message describes
-observed market data and should not automatically be treated as a customer
-order submitted directly to this matching engine.
+- Time-in-force semantics (IOC, FOK, post-only)
+- Multiple concurrent instruments in one process
+- HTTP/JSON application layer (`apps/server`) and a live book snapshot API
+- `OrderPool`/`OrderIndex` growth still allocates on an occasional doubling
+  step even with `reserveOrderCapacity()` sized correctly for the common
+  case — bounding that fully is unaddressed
+- A visualization layer reading a periodic, off-hot-path snapshot rather
+  than the live book directly (see ARCH_DECISIONS.md for why that boundary
+  matters for anything reading state produced by a latency-sensitive engine)
 
 ## Design principles
 

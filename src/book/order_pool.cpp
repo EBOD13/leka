@@ -166,6 +166,18 @@ Order* OrderPool::allocate(OrderId orderId, Price price, Quantity originalQuanti
     return order;
 }
 
+/**
+ * @details Only ever creates pages, never removes them: reserving a smaller
+ * count than a previous call is a no-op rather than shrinking capacity that
+ * may already hold live orders.
+ */
+void OrderPool::reserve(std::size_t orderCount) {
+    const std::size_t neededPages = (orderCount + SlotsPerPage - 1) / SlotsPerPage;
+    while (pages.size() < neededPages) {
+        createPage();
+    }
+}
+
 /** Releases a live slot after validating pool ownership and allocation state. */
 void OrderPool::release(Order* order) {
     if (order == nullptr) {

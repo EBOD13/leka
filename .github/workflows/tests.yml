@@ -1,0 +1,41 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure (sanitizers on, matching local development builds)
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DENABLE_SANITIZERS=ON
+          -DBUILD_TESTING=ON
+          -DBUILD_BENCHMARKS=ON
+          -DBUILD_TOOLS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests (ASan/UBSan)
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Smoke-test the benchmark under sanitizers
+        # Confirms the benchmark still builds and runs to completion clean
+        # under ASan/UBSan; its reported latency numbers are not asserted on
+        # here; a shared CI runner is too noisy for that to mean anything,
+        # and the numbers in ARCH_DECISIONS.md are measured locally, in
+        # Release, without sanitizers, for exactly that reason.
+        run: ./build/benchmark_order_book

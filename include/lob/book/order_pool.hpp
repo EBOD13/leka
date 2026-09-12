@@ -49,6 +49,24 @@ class OrderPool {
         /** Destroys an order and returns its slot to the free list. */
         void release(Order* order);
 
+        /**
+         * @brief Pre-allocates enough pages to hold at least @p orderCount
+         * live orders without allocate() creating a page on its own.
+         *
+         * A page is created lazily, on the first allocate() call that finds
+         * no free slot, via mmap — a syscall with a genuinely unbounded tail
+         * (page fault handling, kernel scheduling), which is why it shows up
+         * as the multi-order-of-magnitude outliers in a latency histogram
+         * (see ARCH_DECISIONS.md ADR-008). Calling this once, before trading
+         * begins, for a known or comfortably over-estimated maximum order
+         * count moves every one of those mmap calls out of the hot path
+         * entirely, the same trade PriceLadder already makes for price
+         * levels: pay a bounded, known cost once, in exchange for a flat
+         * tail afterward. Exceeding @p orderCount still falls back to the
+         * lazy per-allocation behavior rather than failing.
+         */
+        void reserve(std::size_t orderCount);
+
         /** Returns the number of allocated pages. */
         std::size_t getPageCount() const { return pages.size(); }
         /** Returns the number of live orders in the pool. */

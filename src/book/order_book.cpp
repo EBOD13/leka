@@ -4,6 +4,13 @@
 
 namespace lob {
 
+/** @details See the header for why 65536 levels of tick 1 starting at 1 are adequate defaults for tests and examples only. */
+OrderBook::OrderBook() : OrderBook(Price{1}, Price{1}, DefaultLevelCount) {}
+
+OrderBook::OrderBook(Price minPrice, Price tickSize, std::size_t levelCount)
+	: bids(minPrice, tickSize, levelCount, /*descending=*/true),
+	  asks(minPrice, tickSize, levelCount, /*descending=*/false) {}
+
 /**
  * @details A new order starts with equal original and remaining quantities.
  * The shared insertion helper provides the same transactional guarantees as
@@ -45,37 +52,39 @@ Order* OrderBook::addOrderWithQuantities(
 		remainingQuantity > originalQuantity) {
 		throw std::invalid_argument("Invalid original or remaining quantity");
 	}
-	if (orderIndex.findOrder(orderId) != nullptr) {
-		throw std::logic_error("Order with the same OrderId already exists in the book");
-	}
-
+	// Duplicate IDs are detected by the index insertion below, which already
+	// hashes the key. Probing for the ID here first would hash it a second
+	// time on every accepted insert to catch a case the rollback handles.
 	Order* order = orderPool.allocate(orderId, price, originalQuantity,
 									  remainingQuantity, timestamp, orderSide,
 									  orderType, sequenceNumber);
-	bool levelCreated = false;
 	bool addedToLevel = false;
-	PriceLevels* levels = nullptr;
-	PriceLevels::iterator levelIterator;
+	PriceLadder* ladder = nullptr;
+	PriceLevel* level = nullptr;
 
 	try {
 		if (!order->isValid()) {
 			throw std::invalid_argument("Cannot add an invalid order");
 		}
 
-		levels = order->isBuy() ? &bids : &asks;
-		auto result = levels->try_emplace(order->getPrice(), order->getPrice());
-		levelIterator = result.first;
-		levelCreated = result.second;
-		levelIterator->second.addOrder(order);
+		// The level always exists; there is nothing to create and nothing
+		// that can fail here except an out-of-range or misaligned price.
+		ladder = order->isBuy() ? &bids : &asks;
+		level = &ladder->levelAt(order->getPrice());
+		const bool wasEmpty = level->isEmpty();
+		level->addOrder(order);
 		addedToLevel = true;
+		if (wasEmpty) {
+			ladder->markOccupied(order->getPrice());
+		}
 
 		orderIndex.addOrder(order);
 	} catch (...) {
 		if (addedToLevel) {
-			levelIterator->second.removeOrder(order);
-		}
-		if (levelCreated && levelIterator->second.isEmpty()) {
-			levels->erase(levelIterator);
+			level->removeOrder(order);
+			if (level->isEmpty()) {
+				ladder->markEmpty(order->getPrice());
+			}
 		}
 		orderPool.release(order);
 		throw;
@@ -95,44 +104,28 @@ bool OrderBook::cancelOrder(const OrderId& orderId) {
 }
 
 /**
- * @details A same-price decrease updates the existing FIFO node. All other
- * effective changes use the normal remove-and-add path so the order joins the
- * tail of its replacement price level.
+ * @details The order is resolved once and mutated where it lies. Because the
+ * price is unchanged the order cannot move between levels, so no relinking,
+ * no level lookup, and no sequence number are involved.
  */
-bool OrderBook::modifyOrder(const OrderId& orderId, Price newPrice,
-							Quantity newQuantity, SequenceNumber newSequenceNumber) {
+bool OrderBook::reduceOrder(const OrderId& orderId, Quantity newQuantity) {
 	Order* order = orderIndex.findOrder(orderId);
 	if (order == nullptr) {
 		return false;
 	}
-	if (!newPrice.isValid() || !newQuantity.isValid()) {
-		throw std::invalid_argument("Invalid modification value");
-	}
 
-	const bool samePrice =
-		order->getPrice().getPrice() == newPrice.getPrice();
-	const bool quantityDecreased = newQuantity < order->getRemainingQuantity();
-	if (samePrice && newQuantity.getQuantity() ==
-			order->getRemainingQuantity().getQuantity()) {
+	const std::uint64_t remaining = order->getRemainingQuantity().getQuantity();
+	const std::uint64_t target = newQuantity.getQuantity();
+	if (target == 0 || target > remaining) {
+		throw std::invalid_argument(
+			"Reduction requires a nonzero quantity no greater than the remaining quantity");
+	}
+	if (target == remaining) {
 		return true;
 	}
-	if (samePrice && quantityDecreased) {
-		const Quantity reduction{
-			order->getRemainingQuantity().getQuantity() - newQuantity.getQuantity()};
-		order->setRemainingQuantity(newQuantity);
-		order->getPriceLevel()->reduceTotalQuantity(reduction);
-		return true;
-	}
-	if (!newSequenceNumber.isValid()) {
-		throw std::invalid_argument("Priority-reset modification requires a sequence number");
-	}
 
-	const OrderId id = order->getOrderId();
-	const Timestamp timestamp = order->getTimestamp();
-	const OrderSide side = order->getOrderSide();
-	const OrderType type = order->getOrderType();
-	removeOrder(order);
-	addOrder(id, newPrice, newQuantity, timestamp, side, type, newSequenceNumber);
+	order->setRemainingQuantity(newQuantity);
+	order->getPriceLevel()->reduceTotalQuantity(Quantity{remaining - target});
 	return true;
 }
 
@@ -140,6 +133,15 @@ bool OrderBook::modifyOrder(const OrderId& orderId, Price newPrice,
  * @details This is the single removal path used by cancellation and matching.
  * It removes non-owning references while the Order is alive, then destroys and
  * recycles the object through OrderPool.
+ *
+ * Order already carries a direct pointer to its PriceLevel, set when it was
+ * inserted, so removal uses that pointer instead of independently
+ * re-deriving the level from price through the ladder. PriceLevel::removeOrder
+ * still checks that the order actually belongs to the level it names, which
+ * is the same identity check a map-based re-lookup would have produced; the
+ * ladder-based lookup here would only have been useful for detecting a
+ * corrupted Order::priceLevel pointer, at the cost of a lookup on every
+ * removal to guard against a case OrderPool's own invariants already rule out.
  */
 void OrderBook::removeOrder(Order* order) {
 	if (order == nullptr) {
@@ -149,19 +151,16 @@ void OrderBook::removeOrder(Order* order) {
 		throw std::logic_error("Order is not indexed in this book");
 	}
 
-	PriceLevels& levels = order->isBuy() ? bids : asks;
-	auto levelIterator = levels.find(order->getPrice());
-	if (levelIterator == levels.end()) {
-		throw std::logic_error("Order price level not found");
+	PriceLevel* level = order->getPriceLevel();
+	if (level == nullptr) {
+		throw std::logic_error("Order is not linked to a price level");
 	}
+	PriceLadder& ladder = order->isBuy() ? bids : asks;
+	const Price price = order->getPrice();
 
-	PriceLevel& level = levelIterator->second;
-	if (order->getPriceLevel() != &level) {
-		throw std::logic_error("Order does not belong to its indexed price level");
-	}
-	level.removeOrder(order);
-	if (level.isEmpty()) {
-		levels.erase(levelIterator);
+	level->removeOrder(order);
+	if (level->isEmpty()) {
+		ladder.markEmpty(price);
 	}
 	orderIndex.removeOrder(order);
 	orderPool.release(order);
@@ -176,31 +175,24 @@ const Order* OrderBook::findOrder(const OrderId& orderId) const {
 }
 
 PriceLevel* OrderBook::getBestBid() {
-	if (bids.empty()) {
-		return nullptr;
-	}
-	return &bids.rbegin()->second;
+	return bids.best();
 }
 
 PriceLevel* OrderBook::getBestAsk() {
-	if (asks.empty()) {
-		return nullptr;
-	}
-	return &asks.begin()->second;
+	return asks.best();
 }
 
 const PriceLevel* OrderBook::getBestBid() const {
-	if (bids.empty()) {
-		return nullptr;
-	}
-	return &bids.rbegin()->second;
+	return bids.best();
 }
 
 const PriceLevel* OrderBook::getBestAsk() const {
-	if (asks.empty()) {
-		return nullptr;
-	}
-	return &asks.begin()->second;
+	return asks.best();
+}
+
+void OrderBook::reserveOrderCapacity(std::size_t orderCount) {
+	orderPool.reserve(orderCount);
+	orderIndex.reserve(orderCount);
 }
 
 } // namespace lob

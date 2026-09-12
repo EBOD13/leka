@@ -4,11 +4,11 @@
 #define ORDER_BOOK_HPP
 
 #include "lob/book/order_pool.hpp"
+#include "lob/book/price_ladder.hpp"
 #include "lob/index/order_index.hpp"
 #include "lob/book/price_level.hpp"
 
 #include <cstddef>
-#include <map>
 
 namespace lob {
 
@@ -18,11 +18,38 @@ namespace lob {
  * OrderBook owns Order storage through OrderPool. OrderIndex and PriceLevel
  * objects hold non-owning references to those orders. Matching decisions are
  * made by MatchingEngine; this class maintains synchronized book state.
+ *
+ * Bid and ask levels are tick-indexed arrays (PriceLadder), not ordered maps:
+ * a price is an index, not a search key, so both adding a level and finding
+ * the best one are array operations rather than a tree allocation and a tree
+ * descent. That requires a bounded, pre-configured price range; see the
+ * two-argument constructor.
  */
 class OrderBook {
 	public:
-		/** Creates an empty order book. */
-		OrderBook() = default;
+		/** Number of representable price levels used by the default constructor. */
+		static constexpr std::size_t DefaultLevelCount = 65536;
+
+		/**
+		 * @brief Creates an order book with a small default price range.
+		 *
+		 * The default range and tick (integer prices 1 through 65536, tick 1)
+		 * exist for tests and examples that do not care about the ladder's
+		 * configuration. A real instrument should use the explicit
+		 * constructor, sized to its actual tick size and trading range, and
+		 * call it once at startup: the ladder never grows after construction.
+		 */
+		OrderBook();
+
+		/**
+		 * @brief Creates an order book with an explicitly sized price ladder.
+		 * @param minPrice Lowest representable price on either side.
+		 * @param tickSize Price increment between adjacent levels.
+		 * @param levelCount Number of representable price levels.
+		 * @throws std::invalid_argument for an invalid or overflowing range.
+		 */
+		OrderBook(Price minPrice, Price tickSize, std::size_t levelCount);
+
 		OrderBook(const OrderBook&) = delete;
 		OrderBook& operator=(const OrderBook&) = delete;
 		OrderBook(OrderBook&&) = delete;
@@ -69,17 +96,22 @@ class OrderBook {
 		bool cancelOrder(const OrderId& orderId);
 
 		/**
-		 * @brief Applies Nasdaq-style modification semantics to a resting order.
+		 * @brief Shrinks a resting order in place, preserving its priority.
 		 *
-		 * A same-price quantity decrease is applied in place and preserves
-		 * sequence priority. A quantity increase or price change removes and
-		 * re-adds the order at the FIFO tail using newSequenceNumber.
-		 * @return false when the order is absent; true after modification.
-		 * @throws std::invalid_argument for invalid values or a missing reset
-		 * sequence number.
+		 * The order keeps its price, its FIFO position, and its sequence
+		 * number; only its remaining quantity and the level aggregate change.
+		 * This is the sole modification that does not forfeit time priority,
+		 * which is why repricing and size increases are expressed as a cancel
+		 * followed by a new order rather than handled here.
+		 *
+		 * A missing order is reported rather than thrown: a replayed feed may
+		 * reference an order that was resting before the captured window began.
+		 *
+		 * @return false when the order is absent; true after the reduction.
+		 * @throws std::invalid_argument if newQuantity is zero or above the
+		 * order's current remaining quantity.
 		 */
-		bool modifyOrder(const OrderId& orderId, Price newPrice,
-						 Quantity newQuantity, SequenceNumber newSequenceNumber);
+		bool reduceOrder(const OrderId& orderId, Quantity newQuantity);
 
 		/**
 		 * @brief Removes a currently resting order from every book structure.
@@ -110,18 +142,26 @@ class OrderBook {
 		/** @brief Returns the best ask level for read-only inspection. */
 		const PriceLevel* getBestAsk() const;
 
-		/** Returns the number of bid price levels. */
-		std::size_t getBidLevelCount() const { return bids.size(); }
-		/** Returns the number of ask price levels. */
-		std::size_t getAskLevelCount() const { return asks.size(); }
+		/** Returns the number of occupied bid price levels. */
+		std::size_t getBidLevelCount() const { return bids.occupiedCount(); }
+		/** Returns the number of occupied ask price levels. */
+		std::size_t getAskLevelCount() const { return asks.occupiedCount(); }
+
+		/**
+		 * @brief Pre-allocates order storage and index capacity for up to
+		 * @p orderCount live orders. See OrderPool::reserve(),
+		 * OrderIndex::reserve(), and ARCH_DECISIONS.md ADR-008. Call once,
+		 * before trading begins.
+		 */
+		void reserveOrderCapacity(std::size_t orderCount);
 
 	private:
-		using PriceLevels = std::map<Price, PriceLevel>;
-
 		OrderPool orderPool;
 		OrderIndex orderIndex;
-		PriceLevels bids;
-		PriceLevels asks;
+		// Bids are indexed with descending=true, so "best" is the highest
+		// price; asks are ascending, so "best" is the lowest.
+		PriceLadder bids;
+		PriceLadder asks;
 
 		Order* addOrderWithQuantities(
 			OrderId orderId, Price price, Quantity originalQuantity,

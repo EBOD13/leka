@@ -10,37 +10,39 @@ namespace lob {
 MatchingEngine::MatchingEngine(OrderBook& orderBook)
 	: orderBook(orderBook) {}
 
-/** Dispatches by event type so only the active payload is interpreted. */
+/** Convenience wrapper: identical allocation behavior to the pre-buffer API. */
 std::vector<Execution> MatchingEngine::processEvent(const OrderEvent& event) {
+	std::vector<Execution> out;
+	processEvent(event, out);
+	return out;
+}
+
+/** Dispatches by event type so only the active payload is interpreted. */
+std::size_t MatchingEngine::processEvent(const OrderEvent& event, std::vector<Execution>& out) {
+	out.clear();
 	switch (event.getEventType()) {
 		case OrderEventType::NEW: {
 			const NewOrder& order = event.getNewOrder();
-			return processOrder(order.orderId, order.price, order.quantity,
-							order.timestamp, order.orderSide, order.orderType);
+			matchOrder(order.orderId, order.price, order.quantity,
+					  order.timestamp, order.orderSide, order.orderType, out);
+			return out.size();
 		}
 		case OrderEventType::CANCEL:
 			if (!event.getCancelOrder().orderId.isValid()) {
 				throw std::invalid_argument("Invalid cancel order ID");
 			}
 			orderBook.cancelOrder(event.getCancelOrder().orderId);
-			return {};
-		case OrderEventType::MODIFY: {
-			const ModifyOrder& modification = event.getModifyOrder();
-			if (!modification.orderId.isValid()) {
-				throw std::invalid_argument("Invalid modify order ID");
+			return 0;
+		case OrderEventType::REDUCE: {
+			const ReduceOrder& reduction = event.getReduceOrder();
+			if (!reduction.orderId.isValid()) {
+				throw std::invalid_argument("Invalid reduce order ID");
 			}
-			const Order* existing = orderBook.findOrder(modification.orderId);
-			if (existing == nullptr) {
-				return {};
-			}
-			const bool priorityReset =
-				modification.newPrice.getPrice() != existing->getPrice().getPrice() ||
-				modification.newQuantity > existing->getRemainingQuantity();
-			const SequenceNumber sequence = priorityReset
-				? sequenceNumberGenerator.generate() : SequenceNumber{};
-			orderBook.modifyOrder(modification.orderId, modification.newPrice,
-							  modification.newQuantity, sequence);
-			return {};
+			// A reduction never changes price and never forfeits priority, so
+			// there is no decision to make here and no sequence number to
+			// allocate. The book resolves the order once and mutates in place.
+			orderBook.reduceOrder(reduction.orderId, reduction.newQuantity);
+			return 0;
 		}
 	}
 	throw std::logic_error("Unknown order event type");
@@ -51,6 +53,23 @@ std::vector<Execution> MatchingEngine::processOrder(const OrderEvent& event) {
 	return processEvent(event);
 }
 
+/** Convenience wrapper: identical allocation behavior to the pre-buffer API. */
+std::vector<Execution> MatchingEngine::processOrder(
+	OrderId orderId, Price price, Quantity quantity, Timestamp timestamp,
+	OrderSide orderSide, OrderType orderType) {
+	std::vector<Execution> out;
+	processOrder(orderId, price, quantity, timestamp, orderSide, orderType, out);
+	return out;
+}
+
+std::size_t MatchingEngine::processOrder(
+	OrderId orderId, Price price, Quantity quantity, Timestamp timestamp,
+	OrderSide orderSide, OrderType orderType, std::vector<Execution>& out) {
+	out.clear();
+	matchOrder(orderId, price, quantity, timestamp, orderSide, orderType, out);
+	return out.size();
+}
+
 /**
  * @details
  * Matching is performed without allocating an incoming Order. The incoming
@@ -58,10 +77,15 @@ std::vector<Execution> MatchingEngine::processOrder(const OrderEvent& event) {
  * book. Resting orders are always consumed from the best opposing level's FIFO
  * head, and filled resting orders are removed through OrderBook so its index,
  * price level, and pool remain synchronized.
+ *
+ * This is the single implementation of the matching algorithm; every public
+ * entry point in this file funnels into it. It never clears @c out, so a
+ * caller reusing one buffer across many calls controls exactly when that
+ * buffer's contents are discarded.
  */
-std::vector<Execution> MatchingEngine::processOrder(
+void MatchingEngine::matchOrder(
 	OrderId orderId, Price price, Quantity quantity, Timestamp timestamp,
-	OrderSide orderSide, OrderType orderType) {
+	OrderSide orderSide, OrderType orderType, std::vector<Execution>& out) {
 	if (!orderId.isValid() || !quantity.isValid() || !timestamp.isValid()) {
 		throw std::invalid_argument("Invalid incoming order value");
 	}
@@ -84,7 +108,6 @@ std::vector<Execution> MatchingEngine::processOrder(
 	const SequenceNumber sequenceNumber = sequenceNumberGenerator.generate();
 	const Quantity originalQuantity = quantity;
 	std::uint64_t remaining = quantity.getQuantity();
-	std::vector<Execution> executions;
 
 	// Always inspect the best opposing level first; its FIFO head determines
 	// both price priority and time priority for the next execution.
@@ -117,8 +140,8 @@ std::vector<Execution> MatchingEngine::processOrder(
 			std::min(remaining, restingRemaining);
 		const Quantity executionQuantity{executionValue};
 
-		executions.emplace_back(orderId, restingOrder->getOrderId(),
-								restingOrder->getPrice(), executionQuantity);
+		out.emplace_back(orderId, restingOrder->getOrderId(),
+						 restingOrder->getPrice(), executionQuantity);
 
 		remaining -= executionValue;
 		restingOrder->reduceRemainingQuantity(executionQuantity);
@@ -138,8 +161,6 @@ std::vector<Execution> MatchingEngine::processOrder(
 			orderId, price, originalQuantity, Quantity{remaining}, timestamp,
 			orderSide, OrderType::LIMIT, sequenceNumber);
 	}
-
-	return executions;
 }
 
 } // namespace lob

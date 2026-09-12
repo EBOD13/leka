@@ -188,32 +188,73 @@ int main() {
 		eventEngine.processEvent(lob::OrderEvent{
 			lob::NewOrder{lob::OrderId{101}, lob::Price{100}, lob::Quantity{20},
 							  timestamp, lob::OrderSide::BUY, lob::OrderType::LIMIT}});
+		// REDUCE shrinks in place: the order keeps its sequence number and
+		// stays at the head of its level.
 		eventEngine.processEvent(lob::OrderEvent{
-			lob::ModifyOrder{lob::OrderId{100}, lob::Price{100}, lob::Quantity{5}}});
+			lob::ReduceOrder{lob::OrderId{100}, lob::Quantity{5}}});
 		first = eventBook.findOrder(lob::OrderId{100});
 		assert(first->getRemainingQuantity().getQuantity() == 5);
 		assert(first->getSequenceNumber().getSequenceNumber() ==
 			originalSequence.getSequenceNumber());
 		assert(eventBook.getBestBid()->getTotalQuantity().getQuantity() == 25);
+		assert(eventBook.getBestBid()->getHeadOrder()->getOrderId() ==
+			lob::OrderId{100});
 
+		// A size increase is not a reduction and must be rejected rather than
+		// silently keeping priority.
+		try {
+			eventEngine.processEvent(lob::OrderEvent{
+				lob::ReduceOrder{lob::OrderId{100}, lob::Quantity{15}}});
+			assert(false);
+		} catch (const std::invalid_argument&) {
+		}
+
+		// Reducing an order that is not in the book is a no-op, not an error:
+		// a replayed feed can reference an order from before the window.
+		const auto missing = eventEngine.processEvent(lob::OrderEvent{
+			lob::ReduceOrder{lob::OrderId{999}, lob::Quantity{1}}});
+		assert(missing.empty());
+
+		// A reprice is CANCEL followed by NEW, which forfeits priority: order
+		// 101 was behind 100 at this price and now leads it.
 		eventEngine.processEvent(lob::OrderEvent{
-			lob::ModifyOrder{lob::OrderId{100}, lob::Price{100}, lob::Quantity{15}}});
-		first = eventBook.findOrder(lob::OrderId{100});
-		assert(first->getRemainingQuantity().getQuantity() == 15);
-		assert(first->getSequenceNumber().getSequenceNumber() >
-			originalSequence.getSequenceNumber());
+			lob::CancelOrder{lob::OrderId{100}}});
+		eventEngine.processEvent(lob::OrderEvent{
+			lob::NewOrder{lob::OrderId{102}, lob::Price{100}, lob::Quantity{5},
+							  timestamp, lob::OrderSide::BUY, lob::OrderType::LIMIT}});
+		assert(eventBook.findOrder(lob::OrderId{100}) == nullptr);
 		assert(eventBook.getBestBid()->getHeadOrder()->getOrderId() ==
 			lob::OrderId{101});
 
 		eventEngine.processEvent(lob::OrderEvent{
-			lob::ModifyOrder{lob::OrderId{100}, lob::Price{101}, lob::Quantity{15}}});
-		assert(eventBook.findOrder(lob::OrderId{100})->getPrice().getPrice() == 101);
-		assert(eventBook.getBestBid()->getHeadOrder()->getOrderId() ==
-			lob::OrderId{100});
-
-		eventEngine.processEvent(lob::OrderEvent{
 			lob::CancelOrder{lob::OrderId{101}}});
 		assert(eventBook.findOrder(lob::OrderId{101}) == nullptr);
+	}
+
+	{
+		// Repricing an order through the opposite side must trade rather than
+		// leave the book crossed. Expressed as CANCEL + NEW, it runs the
+		// matcher, which the removed in-place MODIFY path never did.
+		lob::OrderBook crossBook;
+		lob::MatchingEngine crossEngine{crossBook};
+		crossEngine.processEvent(lob::OrderEvent{
+			lob::NewOrder{lob::OrderId{200}, lob::Price{100}, lob::Quantity{10},
+							  timestamp, lob::OrderSide::BUY, lob::OrderType::LIMIT}});
+		crossEngine.processEvent(lob::OrderEvent{
+			lob::NewOrder{lob::OrderId{201}, lob::Price{105}, lob::Quantity{10},
+							  timestamp, lob::OrderSide::SELL, lob::OrderType::LIMIT}});
+
+		crossEngine.processEvent(lob::OrderEvent{lob::CancelOrder{lob::OrderId{200}}});
+		const auto crossed = crossEngine.processEvent(lob::OrderEvent{
+			lob::NewOrder{lob::OrderId{202}, lob::Price{106}, lob::Quantity{10},
+							  timestamp, lob::OrderSide::BUY, lob::OrderType::LIMIT}});
+
+		assert(crossed.size() == 1);
+		assert(crossed[0].getRestingOrderId() == lob::OrderId{201});
+		assert(crossed[0].getExecutionPrice().getPrice() == 105);
+		assert(crossed[0].getExecutionQuantity().getQuantity() == 10);
+		assert(crossBook.getAskLevelCount() == 0);
+		assert(crossBook.getBidLevelCount() == 0);
 	}
 
 	{

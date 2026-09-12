@@ -1,0 +1,18 @@
+# Interview prep / personal notes -- never publish
+INTERVIEW_PREP.md
+*.private.md
+
+# Build output
+build/
+build-*/
+
+# Market data: large, and redistribution of exchange sample data is not ours to grant
+data/
+
+# Generated documentation
+html/
+latex/
+doc/html/
+
+# macOS
+.DS_Store

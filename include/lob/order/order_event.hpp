@@ -14,11 +14,19 @@
 
 namespace lob {
 
-/** @brief Operation selected before an event payload is interpreted. */
+/**
+ * @brief Operation selected before an event payload is interpreted.
+ *
+ * These are the three primitives a price-time-priority venue actually
+ * exposes. There is deliberately no in-place modify: a reprice or a size
+ * increase always forfeits time priority, so it is expressed as CANCEL
+ * followed by NEW, which also routes it through the matcher. REDUCE is the
+ * only change that keeps a resting order's queue position.
+ */
 enum class OrderEventType {
     NEW,
     CANCEL,
-    MODIFY
+    REDUCE
 };
 
 /** @brief Payload for accepting a new order. */
@@ -43,13 +51,17 @@ struct CancelOrder {
     OrderId orderId;
 };
 
-/** @brief Payload for changing an existing resting limit order. */
-struct ModifyOrder {
-    /** Identifier of the order to modify. */
+/**
+ * @brief Payload for shrinking a resting order without losing priority.
+ *
+ * The price cannot change, so the order never moves between levels and keeps
+ * its FIFO position. A reduction to zero is a cancellation and must be sent
+ * as CancelOrder instead.
+ */
+struct ReduceOrder {
+    /** Identifier of the order to shrink. */
     OrderId orderId;
-    /** Replacement limit price. */
-    Price newPrice;
-    /** Replacement remaining quantity. */
+    /** Replacement remaining quantity; nonzero and not above the current one. */
     Quantity newQuantity;
 };
 
@@ -65,8 +77,8 @@ class OrderEvent {
         explicit OrderEvent(NewOrder order);
         /** Creates a CANCEL event. */
         explicit OrderEvent(CancelOrder order);
-        /** Creates a MODIFY event. */
-        explicit OrderEvent(ModifyOrder order);
+        /** Creates a REDUCE event. */
+        explicit OrderEvent(ReduceOrder order);
 
         /** Returns the operation represented by the active payload. */
         OrderEventType getEventType() const;
@@ -74,11 +86,11 @@ class OrderEvent {
         const NewOrder& getNewOrder() const;
         /** Returns the CANCEL payload or throws when this is not a CANCEL event. */
         const CancelOrder& getCancelOrder() const;
-        /** Returns the MODIFY payload or throws when this is not a MODIFY event. */
-        const ModifyOrder& getModifyOrder() const;
+        /** Returns the REDUCE payload or throws when this is not a REDUCE event. */
+        const ReduceOrder& getReduceOrder() const;
 
     private:
-        std::variant<NewOrder, CancelOrder, ModifyOrder> payload;
+        std::variant<NewOrder, CancelOrder, ReduceOrder> payload;
 };
 
 } // namespace lob
