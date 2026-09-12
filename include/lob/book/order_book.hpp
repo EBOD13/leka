@@ -3,6 +3,7 @@
 #ifndef ORDER_BOOK_HPP
 #define ORDER_BOOK_HPP
 
+#include "lob/book/order_book_snapshot.hpp"
 #include "lob/book/order_pool.hpp"
 #include "lob/book/price_ladder.hpp"
 #include "lob/index/order_index.hpp"
@@ -154,6 +155,19 @@ class OrderBook {
 		 * before trading begins.
 		 */
 		void reserveOrderCapacity(std::size_t orderCount);
+
+		/**
+		 * @brief Fills @p out with the top @p depth levels of each side.
+		 *
+		 * Read-only, and deliberately not called from anywhere inside the
+		 * matching path: a caller captures this *between* events so that
+		 * nothing a snapshot consumer needs can ever execute inside
+		 * processEvent(). @p out is reused rather than returned by value, so
+		 * a caller snapshotting repeatedly stops allocating once its vectors
+		 * reach steady-state capacity — the same reasoning as the execution
+		 * buffer in ADR-005.
+		 */
+		void captureSnapshot(BookSnapshot& out, std::size_t depth) const;
 
 	private:
 		OrderPool orderPool;

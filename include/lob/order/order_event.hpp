@@ -10,7 +10,10 @@
 
 #include <variant>
 
-/** @file Defines event-first order command payloads and dispatch types. */
+/**
+ * @file
+ * @brief Defines event-first order command payloads and dispatch types.
+ */
 
 namespace lob {
 

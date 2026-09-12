@@ -3,6 +3,7 @@
 #include "lob/index/order_index.hpp"
 #include <functional>
 #include <stdexcept>
+#include <vector>
 
 namespace lob {
 

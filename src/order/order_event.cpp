@@ -5,7 +5,10 @@
 
 namespace lob {
 
-/** @file Implements type-safe NEW, CANCEL, and REDUCE event payload access. */
+/**
+ * @file
+ * @brief Implements type-safe NEW, CANCEL, and REDUCE event payload access.
+ */
 
 /** Constructs a NEW event from its payload. */
 OrderEvent::OrderEvent(NewOrder order) : payload(std::move(order)) {}

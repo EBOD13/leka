@@ -35,7 +35,9 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>

@@ -42,8 +42,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "leka"
-
+PROJECT_NAME           = "Leka"
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
@@ -54,8 +53,7 @@ PROJECT_NUMBER         =
 # for a project that appears at the top of each page and should give viewers a
 # quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          =
-
+PROJECT_BRIEF          = "A low-latency C++20 price-time-priority limit order book and matching engine"
 # With the PROJECT_LOGO tag one can specify a logo or an icon that is included
 # in the documentation. The maximum height of the logo should not exceed 55
 # pixels and the maximum width should not exceed 200 pixels. Doxygen will copy
@@ -215,8 +213,7 @@ SHORT_NAMES            = NO
 # explicit @brief command for a brief description.)
 # The default value is: NO.
 
-JAVADOC_AUTOBRIEF      = NO
-
+JAVADOC_AUTOBRIEF      = YES
 # If the JAVADOC_BANNER tag is set to YES then Doxygen will interpret a line
 # such as
 # /***************
@@ -360,7 +357,6 @@ EXTENSION_MAPPING      =
 # The default value is: YES.
 
 MARKDOWN_SUPPORT       = YES
-
 # If the MARKDOWN_STRICT tag is enabled then Doxygen treats text in comments as
 # Markdown formatted also in cases where Doxygen's native markup format
 # conflicts with that of Markdown. This is only relevant in cases where
@@ -382,8 +378,7 @@ MARKDOWN_STRICT        = YES
 # Minimum value: 0, maximum value: 99, default value: 6.
 # This tag requires that the tag MARKDOWN_SUPPORT is set to YES.
 
-TOC_INCLUDE_HEADINGS   = 6
-
+TOC_INCLUDE_HEADINGS   = 3
 # The MARKDOWN_ID_STYLE tag can be used to specify the algorithm used to
 # generate identifiers for the Markdown headings. Note: Every identifier is
 # unique.
@@ -572,8 +567,7 @@ EXTRACT_PACKAGE        = NO
 # included in the documentation.
 # The default value is: NO.
 
-EXTRACT_STATIC         = NO
-
+EXTRACT_STATIC         = YES
 # If the EXTRACT_LOCAL_CLASSES tag is set to YES, classes (and structs) defined
 # locally in source files will be included in the documentation. If set to NO,
 # only classes defined in header files are included. Does not have any effect
@@ -719,8 +713,7 @@ INLINE_INFO            = YES
 # name. If set to NO, the members will appear in declaration order.
 # The default value is: YES.
 
-SORT_MEMBER_DOCS       = YES
-
+SORT_MEMBER_DOCS       = NO
 # If the SORT_BRIEF_DOCS tag is set to YES then Doxygen will sort the brief
 # descriptions of file, namespace and class members alphabetically by member
 # name. If set to NO, the members will appear in declaration order. Note that
@@ -1026,8 +1019,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  =
-
+INPUT                  = README.md ARCH_DECISIONS.md include src
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses
 # libiconv (or the iconv built into libc) for the transcoding. See the libiconv
@@ -1066,63 +1058,12 @@ INPUT_FILE_ENCODING    =
 # provided as Doxygen C comment), *.py, *.pyw, *.f90, *.f95, *.f03, *.f08,
 # *.f18, *.f, *.for, *.vhd, *.vhdl, *.ucf, *.qsf and *.ice.
 
-FILE_PATTERNS          = *.c \
-                         *.cc \
-                         *.cxx \
-                         *.cxxm \
-                         *.cpp \
-                         *.cppm \
-                         *.ccm \
-                         *.c++ \
-                         *.c++m \
-                         *.java \
-                         *.ii \
-                         *.ixx \
-                         *.ipp \
-                         *.i++ \
-                         *.inl \
-                         *.idl \
-                         *.ddl \
-                         *.odl \
-                         *.h \
-                         *.hh \
-                         *.hxx \
-                         *.hpp \
-                         *.h++ \
-                         *.l \
-                         *.cs \
-                         *.d \
-                         *.php \
-                         *.php4 \
-                         *.php5 \
-                         *.phtml \
-                         *.inc \
-                         *.m \
-                         *.markdown \
-                         *.md \
-                         *.mm \
-                         *.dox \
-                         *.py \
-                         *.pyw \
-                         *.f90 \
-                         *.f95 \
-                         *.f03 \
-                         *.f08 \
-                         *.f18 \
-                         *.f \
-                         *.for \
-                         *.vhd \
-                         *.vhdl \
-                         *.ucf \
-                         *.qsf \
-                         *.ice
-
+FILE_PATTERNS          = *.hpp *.cpp *.md
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
 # The default value is: NO.
 
 RECURSIVE              = YES
-
 # The EXCLUDE tag can be used to specify files and/or directories that should be
 # excluded from the INPUT source files. This way you can easily exclude a
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
@@ -1130,8 +1071,7 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which Doxygen is
 # run.
 
-EXCLUDE                =
-
+EXCLUDE                = build doc html latex data .venv
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
 # from the input.
@@ -1241,8 +1181,7 @@ FILTER_SOURCE_PATTERNS =
 # (index.html). This can be useful if you have a project on for instance GitHub
 # and want to reuse the introduction page also for the Doxygen output.
 
-USE_MDFILE_AS_MAINPAGE =
-
+USE_MDFILE_AS_MAINPAGE = README.md
 # If the IMPLICIT_DIR_DOCS tag is set to YES, any README.md file found in sub-
 # directories of the project's root, is used as the documentation for that sub-
 # directory, except when the README.md starts with a \dir, \page or \mainpage
@@ -1272,8 +1211,7 @@ FORTRAN_COMMENT_AFTER  = 72
 # also VERBATIM_HEADERS is set to NO.
 # The default value is: NO.
 
-SOURCE_BROWSER         = NO
-
+SOURCE_BROWSER         = YES
 # Setting the INLINE_SOURCES tag to YES will include the body of functions,
 # multi-line macros, enums or list initialized variables directly into the
 # documentation.
@@ -1286,20 +1224,17 @@ INLINE_SOURCES         = NO
 # Fortran comments will always remain visible.
 # The default value is: YES.
 
-STRIP_CODE_COMMENTS    = YES
-
+STRIP_CODE_COMMENTS    = NO
 # If the REFERENCED_BY_RELATION tag is set to YES then for each documented
 # entity all documented functions referencing it will be listed.
 # The default value is: NO.
 
-REFERENCED_BY_RELATION = NO
-
+REFERENCED_BY_RELATION = YES
 # If the REFERENCES_RELATION tag is set to YES then for each documented function
 # all documented entities called/used by that function will be listed.
 # The default value is: NO.
 
-REFERENCES_RELATION    = NO
-
+REFERENCES_RELATION    = YES
 # If the REFERENCES_LINK_SOURCE tag is set to YES and SOURCE_BROWSER tag is set
 # to YES then the hyperlinks from functions in REFERENCES_RELATION and
 # REFERENCED_BY_RELATION lists will link to the source code. Otherwise they will
@@ -1410,8 +1345,7 @@ HTML_FILE_EXTENSION    = .html
 # of the possible markers and block names see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_HEADER            =
-
+HTML_HEADER            = docs/theme/header.html
 # The HTML_FOOTER tag can be used to specify a user-defined HTML footer for each
 # generated HTML page. If the tag is left blank Doxygen will generate a standard
 # footer. See HTML_HEADER for more information on how to generate a default
@@ -1450,8 +1384,9 @@ HTML_STYLESHEET        =
 # documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  =
-
+HTML_EXTRA_STYLESHEET  = docs/theme/doxygen-awesome.css \
+                         docs/theme/doxygen-awesome-sidebar-only.css \
+                         docs/theme/doxygen-awesome-sidebar-only-darkmode-toggle.css
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
 # that these files will be copied to the base HTML output directory. Use the
@@ -1460,8 +1395,10 @@ HTML_EXTRA_STYLESHEET  =
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       =
-
+HTML_EXTRA_FILES       = docs/theme/doxygen-awesome-darkmode-toggle.js \
+                         docs/theme/doxygen-awesome-fragment-copy-button.js \
+                         docs/theme/doxygen-awesome-paragraph-link.js \
+                         docs/theme/doxygen-awesome-interactive-toc.js
 # The HTML_COLORSTYLE tag can be used to specify if the generated HTML output
 # should be rendered with a dark or light theme.
 # Possible values are: LIGHT always generates light mode output, DARK always
@@ -1473,8 +1410,7 @@ HTML_EXTRA_FILES       =
 # The default value is: AUTO_LIGHT.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_COLORSTYLE        = AUTO_LIGHT
-
+HTML_COLORSTYLE        = LIGHT
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to
 # this color. Hue is specified as an angle on a color-wheel, see
@@ -1522,8 +1458,7 @@ HTML_DYNAMIC_MENUS     = YES
 # The default value is: NO.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_DYNAMIC_SECTIONS  = NO
-
+HTML_DYNAMIC_SECTIONS  = YES
 # If the HTML_CODE_FOLDING tag is set to YES then classes and functions can be
 # dynamically folded and expanded in the generated HTML source code.
 # The default value is: YES.
@@ -1785,7 +1720,6 @@ ECLIPSE_DOC_ID         = org.doxygen.Project
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
 DISABLE_INDEX          = NO
-
 # The GENERATE_TREEVIEW tag is used to specify whether a tree-like index
 # structure should be generated to display hierarchical information. If the tag
 # value is set to YES, a side panel will be generated containing a tree-like
@@ -1802,7 +1736,6 @@ DISABLE_INDEX          = NO
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
 GENERATE_TREEVIEW      = YES
-
 # When GENERATE_TREEVIEW is set to YES, the PAGE_OUTLINE_PANEL option determines
 # if an additional navigation panel is shown at the right hand side of the
 # screen, displaying an outline of the contents of the main page, similar to
@@ -1823,7 +1756,6 @@ PAGE_OUTLINE_PANEL     = YES
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
 FULL_SIDEBAR           = NO
-
 # The ENUM_VALUES_PER_LINE tag can be used to set the number of enum values that
 # Doxygen will group on one line in the generated HTML documentation.
 #
@@ -2072,7 +2004,6 @@ EXTRA_SEARCH_MAPPINGS  =
 # The default value is: YES.
 
 GENERATE_LATEX         = NO
-
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
 # it.
@@ -2624,8 +2555,7 @@ HIDE_UNDOC_RELATIONS   = YES
 # set to NO
 # The default value is: NO.
 
-HAVE_DOT               = NO
-
+HAVE_DOT               = YES
 # The DOT_NUM_THREADS specifies the number of dot invocations Doxygen is allowed
 # to run in parallel. When set to 0 Doxygen will base this on the number of
 # processors available in the system. You can set it explicitly to a value
@@ -2701,7 +2631,6 @@ DOT_FONTPATH           =
 # The default value is: YES.
 
 CLASS_GRAPH            = YES
-
 # If the COLLABORATION_GRAPH tag is set to YES then Doxygen will generate a
 # graph for each documented class showing the direct and indirect implementation
 # dependencies (inheritance, containment, and class references variables) of the
@@ -2713,7 +2642,6 @@ CLASS_GRAPH            = YES
 # This tag requires that the tag HAVE_DOT is set to YES.
 
 COLLABORATION_GRAPH    = YES
-
 # If the GROUP_GRAPHS tag is set to YES then Doxygen will generate a graph for
 # groups, showing the direct groups dependencies. Explicit enabling a group
 # dependency graph, when GROUP_GRAPHS is set to NO, can be accomplished by means
@@ -2795,7 +2723,6 @@ TEMPLATE_RELATIONS     = NO
 # This tag requires that the tag HAVE_DOT is set to YES.
 
 INCLUDE_GRAPH          = YES
-
 # If the INCLUDED_BY_GRAPH, ENABLE_PREPROCESSING and SEARCH_INCLUDES tags are
 # set to YES then Doxygen will generate a graph for each documented file showing
 # the direct and indirect include dependencies of the file with other documented
@@ -2819,7 +2746,6 @@ INCLUDED_BY_GRAPH      = YES
 # This tag requires that the tag HAVE_DOT is set to YES.
 
 CALL_GRAPH             = NO
-
 # If the CALLER_GRAPH tag is set to YES then Doxygen will generate a caller
 # dependency graph for every global function or class method.
 #
@@ -2831,7 +2757,6 @@ CALL_GRAPH             = NO
 # This tag requires that the tag HAVE_DOT is set to YES.
 
 CALLER_GRAPH           = NO
-
 # If the GRAPHICAL_HIERARCHY tag is set to YES then Doxygen will graphical
 # hierarchy of all classes instead of a textual one.
 # The default value is: YES.
@@ -2874,8 +2799,7 @@ DIR_GRAPH_MAX_DEPTH    = 1
 # The default value is: png.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_IMAGE_FORMAT       = png
-
+DOT_IMAGE_FORMAT       = svg
 # If DOT_IMAGE_FORMAT is set to svg or svg:svg or svg:svg:core, then this option
 # can be set to YES to enable generation of interactive SVG images that allow
 # zooming and panning.
@@ -2888,8 +2812,7 @@ DOT_IMAGE_FORMAT       = png
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-INTERACTIVE_SVG        = NO
-
+INTERACTIVE_SVG        = YES
 # The DOT_PATH tag can be used to specify the path where the dot tool can be
 # found. If left blank, it is assumed the dot tool can be found in the path.
 # This tag requires that the tag HAVE_DOT is set to YES.
@@ -3050,3 +2973,4 @@ MSCGEN_TOOL            =
 # command).
 
 MSCFILE_DIRS           =
+

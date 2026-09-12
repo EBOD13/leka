@@ -96,6 +96,28 @@ class PriceLadder {
         /** Returns the number of currently occupied levels. */
         std::size_t occupiedCount() const { return occupied; }
 
+        /**
+         * @brief Walks up to @p maxLevels occupied levels, best first.
+         *
+         * Read-only traversal for market-data snapshots. Because "best" is
+         * always the lowest occupied index on either side (see the class
+         * comment), walking outward from the touch is the same forward
+         * bit-scan on both bids and asks, and it visits levels in true
+         * price priority order without sorting anything.
+         *
+         * This deliberately stops after @p maxLevels rather than walking the
+         * whole ladder: a snapshot consumer wants the top of book, and the
+         * ladder may span hundreds of thousands of mostly-empty levels.
+         */
+        template <typename Fn>
+        void forEachOccupied(std::size_t maxLevels, Fn&& fn) const {
+            std::size_t index = bestIndex;
+            for (std::size_t seen = 0; seen < maxLevels && index != npos; ++seen) {
+                fn(levels[index]);
+                index = nextSetBit(index + 1);
+            }
+        }
+
     private:
         std::size_t indexOf(Price price) const;
         std::size_t nextSetBit(std::size_t from) const;

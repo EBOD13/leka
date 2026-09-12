@@ -766,3 +766,106 @@ output, reproducible via:
 Rscript-free path: ./threaded_replay_benchmark <interchange.csv>
 compared directly against: ./benchmark_interchange --input <interchange.csv>
 ```
+
+---
+
+## ADR-010: The viewer reads snapshots captured between events, never inside them
+
+**Status:** Accepted, 2026.
+
+### Context
+
+A visualization is worth having — a depth ladder, the engine's own latency,
+order flow, and a trade tape make the system legible in a way a percentile
+table does not. But every number in this document depends on
+`processEvent()` doing nothing except match orders. A UI that serializes,
+locks, or even increments a counter the renderer also reads (false sharing,
+the exact cost ADR-009's `alignas(64)` padding exists to avoid) would
+invalidate the entire measurement history in one commit.
+
+There is also a throughput mismatch that rules out the obvious design. The
+engine sustains roughly 5–7M events/sec; a display refreshes at 60fps. That
+is about **100,000 events per frame**. A viewer cannot consume the event
+stream. It has to consume periodic *state*, sampled.
+
+### Decision
+
+The engine does not publish anything. It gained one read-only method,
+`OrderBook::captureSnapshot(BookSnapshot&, depth)`, and **nothing inside the
+matching path calls it**. A caller invokes it *between* `processEvent()`
+calls, which makes the separation structural rather than a discipline anyone
+has to remember:
+
+```cpp
+engine.processEvent(event, executionBuffer);        // timed, hot
+if (++applied % snapshotEvery == 0) {               // outside the timed region
+    book.captureSnapshot(snapshot, depth);
+}
+```
+
+`tools/viz/snapshot_recorder.cpp` replays an interchange CSV this way and
+writes one JSON object per snapshot to a JSONL file. `docs/viz/` is a static
+page that animates that file — no server, hostable on the same GitHub Pages
+as the Doxygen output.
+
+The record schema is deliberately the shape a live WebSocket server would
+publish (`BookSnapshot` plus rolling latency percentiles, cumulative flow
+counters, and the executions since the previous frame), so the browser code
+written against a recorded file drives a live feed unchanged. That is the
+reason the offline version is not throwaway work: it is the same data model,
+minus the transport.
+
+Two supporting pieces came with it:
+
+- `PriceLadder::forEachOccupied(maxLevels, fn)` — walks occupied levels
+  best-first. Because "best" is the lowest occupied index on *both* sides
+  (ADR-002), this is the same forward bit-scan for bids and asks, and it
+  yields levels already in price priority with nothing sorted. It stops after
+  `maxLevels` rather than walking a ladder that may span hundreds of
+  thousands of mostly-empty slots.
+- `include/lob/book/order_book_snapshot.hpp` — previously an empty stub;
+  now the shared data model. `BookSnapshot::reset()` clears the vectors
+  without releasing capacity so a caller snapshotting in a loop stops
+  allocating after warmup, the same reasoning as ADR-005's execution buffer.
+
+### Consequences
+
+Measured on the same 193,075-event real ITCH interchange file, Release, no
+sanitizers — `benchmark_interchange` (no snapshotting whatsoever) against
+`snapshot_recorder` (capturing every 128 events, depth 12 per side):
+
+```text
+                        benchmark_interchange     snapshot_recorder
+NEW_REST p50                 42 ns                 42 ns  (median of 1,509 frame windows)
+CANCEL   p50                 42 ns                 42 ns
+NEW_CROSS p50                83 ns                 83 ns
+```
+
+The engine's per-event cost is unchanged, which is the claim that needed
+proving.
+
+One measurement trap worth recording, because it briefly looked like a 6x
+regression: the recorder's *final* frame reports `NEW_REST` p50 = 250 ns.
+That is not a snapshotting cost. Each frame carries a **rolling window of the
+last 1,024 samples**, and the last window covers end-of-session, when the
+book is draining and the remaining events are unrepresentative. Comparing a
+rolling tail window against the benchmark's all-95,015-sample aggregate is
+comparing different populations. The median across all 1,509 windows is
+42 ns, matching exactly. Same lesson as ADR-008: check what the number is
+actually a statistic *of* before believing it.
+
+### Alternatives Considered
+
+- **Publish from inside `processEvent()`** (a callback, or pushing to a
+  telemetry queue on the matching thread). Rejected: it puts UI concerns on
+  the hot path by construction, and every future change to the publisher
+  becomes a change to the matching path's cost profile.
+- **Stream every event to the browser.** Rejected on arithmetic: ~100,000
+  events per display frame. The viewer wants sampled state, not the event
+  log.
+- **Live WebSocket server first.** Deferred, not rejected. It needs an
+  HTTP/WS dependency and a third thread, and it can only be seen by someone
+  who clones and runs the repo. The recorded version is hostable next to the
+  docs, so it is visible to anyone who opens the project — and because the
+  schema is shared, the live version reuses this work rather than replacing
+  it.

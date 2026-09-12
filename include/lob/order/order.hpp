@@ -55,12 +55,33 @@ class Order {
 		/** Returns the deterministic processing sequence. */
 		SequenceNumber getSequenceNumber() const;
 
+		/**
+		 * @name Intrusive FIFO links
+		 *
+		 * The next/previous pointers live inside Order itself rather than in
+		 * a separate list node, so joining or leaving a PriceLevel's queue
+		 * allocates nothing and unlinking a *known* order is O(1). The
+		 * priceLevel back-pointer is what makes cancellation O(1) end to
+		 * end: OrderIndex resolves an OrderId to this Order, and the order
+		 * already knows which level to unlink itself from, with no search.
+		 *
+		 * These are maintained by PriceLevel and OrderBook; callers outside
+		 * the book should treat them as read-only.
+		 * @{
+		 */
+		/** Returns the next order in this price level's FIFO, or nullptr at the tail. */
 		Order* getNextOrder() const;
+		/** Sets the next order in the FIFO. Called by PriceLevel during linking. */
 		void setNextOrder(Order* nextOrder);
+		/** Returns the previous order in this price level's FIFO, or nullptr at the head. */
 		Order* getPreviousOrder() const;
+		/** Sets the previous order in the FIFO. Called by PriceLevel during linking. */
 		void setPreviousOrder(Order* previousOrder);
+		/** Returns the price level this order rests on, or nullptr when unlinked. */
 		PriceLevel* getPriceLevel() const;
+		/** Sets the owning price level; nullptr marks the order as unlinked. */
 		void setPriceLevel(PriceLevel* priceLevel);
+		/** @} */
 
 		/** Decreases remaining quantity; throws if the reduction would underflow. */
 		void reduceRemainingQuantity(Quantity quantity);

@@ -3,6 +3,7 @@
 #include "lob/book/order_pool.hpp"
 
 #include <cerrno>
+#include <memory>
 #include <new>
 #include <stdexcept>
 #include <system_error>

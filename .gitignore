@@ -16,3 +16,6 @@ doc/html/
 
 # macOS
 .DS_Store
+
+# Recorded snapshots: regenerate with snapshot_recorder
+docs/viz/data/

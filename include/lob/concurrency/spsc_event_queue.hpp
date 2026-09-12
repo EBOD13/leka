@@ -8,6 +8,7 @@
 #include <atomic>
 #include <cstddef>
 #include <memory>
+#include <new>
 
 namespace lob {
 

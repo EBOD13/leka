@@ -2,10 +2,14 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <vector>
 
 namespace lob {
 
-/** @file Implements event dispatch and price/time matching behavior. */
+/**
+ * @file
+ * @brief Implements event dispatch and price/time matching behavior.
+ */
 
 MatchingEngine::MatchingEngine(OrderBook& orderBook)
 	: orderBook(orderBook) {}

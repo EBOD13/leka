@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leka — Order Book Replay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="viz.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">Leka</span>
+    <span class="tagline">low-latency limit order book &mdash; replay viewer</span>
+  </div>
+  <div class="modes">
+    <button class="mode active" data-mode="real">Real (Nasdaq BX)</button>
+    <button class="mode" data-mode="synth">Synthetic (Hawkes)</button>
+    <button class="mode" data-mode="both">Side by side</button>
+    <button class="theme-toggle" id="themeToggle" title="Toggle light / dark">◑</button>
+  </div>
+</header>
+
+<section class="transport">
+  <button id="playPause" class="primary">▶ Play</button>
+  <input id="scrub" type="range" min="0" max="100" value="0" step="1">
+  <span id="position" class="mono">0 / 0</span>
+  <label class="speed">
+    Speed
+    <select id="speed">
+      <option value="1">1&times;</option>
+      <option value="2">2&times;</option>
+      <option value="4" selected>4&times;</option>
+      <option value="8">8&times;</option>
+      <option value="16">16&times;</option>
+    </select>
+  </label>
+</section>
+
+<main id="panels" class="panels"></main>
+
+<footer class="foot">
+  <p>
+    Frames are book snapshots captured <em>between</em> events by
+    <code>tools/viz/snapshot_recorder.cpp</code> &mdash; never inside
+    <code>MatchingEngine::processEvent()</code>. The latency figures below are
+    measured exactly as <code>benchmark_interchange</code> measures them.
+    See <strong>ADR-010</strong> in <code>ARCH_DECISIONS.md</code>.
+  </p>
+</footer>
+
+<template id="panelTemplate">
+  <div class="panel">
+    <div class="panel-head">
+      <h2 class="label"></h2>
+      <div class="quotes">
+        <span class="quote bid">bid <b class="bb">—</b></span>
+        <span class="quote spread">spread <b class="sp">—</b></span>
+        <span class="quote ask">ask <b class="ba">—</b></span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card ladder-card">
+        <h3>Depth ladder <small class="levels"></small></h3>
+        <div class="ladder"></div>
+      </div>
+
+      <div class="card">
+        <h3>Engine latency <small>rolling percentiles, ns (log)</small></h3>
+        <canvas class="latency" width="520" height="190"></canvas>
+        <div class="legend">
+          <span class="k k50">p50</span>
+          <span class="k k99">p99</span>
+          <span class="k k999">p99.9</span>
+          <span class="lat-now mono"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Order flow <small>cumulative</small></h3>
+        <canvas class="flow" width="520" height="140"></canvas>
+        <div class="flowstats mono"></div>
+      </div>
+
+      <div class="card">
+        <h3>Trade tape <small>most recent first</small></h3>
+        <div class="tape"></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script src="viz.js"></script>
+</body>
+</html>

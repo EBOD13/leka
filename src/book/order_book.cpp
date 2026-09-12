@@ -195,4 +195,34 @@ void OrderBook::reserveOrderCapacity(std::size_t orderCount) {
 	orderIndex.reserve(orderCount);
 }
 
+/**
+ * @details Walks each ladder outward from the touch via
+ * PriceLadder::forEachOccupied(), which visits levels in price priority
+ * without sorting because "best" is the lowest occupied index on both sides.
+ * Nothing here mutates book state, and no caller inside the matching path
+ * invokes it.
+ */
+void OrderBook::captureSnapshot(BookSnapshot& out, std::size_t depth) const {
+	out.bids.clear();
+	out.asks.clear();
+
+	bids.forEachOccupied(depth, [&out](const PriceLevel& level) {
+		out.bids.push_back(BookSnapshotLevel{
+			level.getPrice().getPrice(),
+			level.getTotalQuantity().getQuantity(),
+			level.getOrderCount()});
+	});
+	asks.forEachOccupied(depth, [&out](const PriceLevel& level) {
+		out.asks.push_back(BookSnapshotLevel{
+			level.getPrice().getPrice(),
+			level.getTotalQuantity().getQuantity(),
+			level.getOrderCount()});
+	});
+
+	out.bestBidRaw = out.bids.empty() ? 0 : out.bids.front().priceRaw;
+	out.bestAskRaw = out.asks.empty() ? 0 : out.asks.front().priceRaw;
+	out.bidLevelCount = bids.occupiedCount();
+	out.askLevelCount = asks.occupiedCount();
+}
+
 } // namespace lob
