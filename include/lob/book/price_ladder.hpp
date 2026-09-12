@@ -5,6 +5,7 @@
 #include "lob/book/price_level.hpp"
 #include "lob/types/price.hpp"
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -110,6 +111,7 @@ class PriceLadder {
          * ladder may span hundreds of thousands of mostly-empty levels.
          */
         template <typename Fn>
+            requires std::invocable<Fn&, const PriceLevel&>
         void forEachOccupied(std::size_t maxLevels, Fn&& fn) const {
             std::size_t index = bestIndex;
             for (std::size_t seen = 0; seen < maxLevels && index != npos; ++seen) {

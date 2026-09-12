@@ -37,6 +37,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -166,7 +167,7 @@ class LatencyLog {
             for (auto &[label, values] : samples) {
                 if (values.empty()) continue;
                 std::vector<std::uint64_t> sorted = values;
-                std::sort(sorted.begin(), sorted.end());
+                std::ranges::sort(sorted);
                 const auto pct = [&](double p) { return sorted[static_cast<std::size_t>(p * (sorted.size() - 1))]; };
                 std::printf(
                     "  %-10s n=%-9zu min=%-6llu p50=%-6llu p90=%-6llu p99=%-6llu p99.9=%-6llu max=%llu (ns)\n",

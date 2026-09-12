@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -181,7 +182,7 @@ class LatencyLog {
                     continue;
                 }
                 std::vector<std::uint64_t> sorted = values;
-                std::sort(sorted.begin(), sorted.end());
+                std::ranges::sort(sorted);
                 const auto pct = [&](double p) {
                     const std::size_t idx = static_cast<std::size_t>(p * (sorted.size() - 1));
                     return sorted[idx];

@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <span>
 #include <ctime>
 #include <string>
 #include <string_view>
@@ -39,40 +40,48 @@
 
 namespace {
 
-/** @brief Reads a 16-bit big-endian field. */
-inline std::uint16_t rd16(const std::uint8_t *p) {
-    return static_cast<std::uint16_t>(p[0]) << 8 | p[1];
+using ByteView = std::span<const std::uint8_t>;
+
+// ITCH framing and common-header offsets are part of the wire protocol.
+inline constexpr std::size_t FrameLengthBytes = 2;
+inline constexpr std::size_t LocateOffset = 1;
+inline constexpr std::size_t TimestampOffset = 5;
+inline constexpr std::size_t StockSymbolWidth = 8;
+
+/** @brief Reads a 16-bit big-endian field from a zero-copy message view. */
+inline std::uint16_t rd16(ByteView bytes, std::size_t offset) {
+    return static_cast<std::uint16_t>(bytes[offset]) << 8 | bytes[offset + 1];
 }
 
 /** @brief Reads a 32-bit big-endian field. */
-inline std::uint32_t rd32(const std::uint8_t *p) {
-    return static_cast<std::uint32_t>(p[0]) << 24 |
-           static_cast<std::uint32_t>(p[1]) << 16 |
-           static_cast<std::uint32_t>(p[2]) << 8 |
-           static_cast<std::uint32_t>(p[3]);
+inline std::uint32_t rd32(ByteView bytes, std::size_t offset) {
+    return static_cast<std::uint32_t>(bytes[offset]) << 24 |
+           static_cast<std::uint32_t>(bytes[offset + 1]) << 16 |
+           static_cast<std::uint32_t>(bytes[offset + 2]) << 8 |
+           static_cast<std::uint32_t>(bytes[offset + 3]);
 }
 
 /** @brief Reads a 48-bit big-endian field, as used by ITCH timestamps. */
-inline std::uint64_t rd48(const std::uint8_t *p) {
+inline std::uint64_t rd48(ByteView bytes, std::size_t offset) {
     std::uint64_t v = 0;
     for (int i = 0; i < 6; ++i) {
-        v = v << 8 | p[i];
+        v = v << 8 | bytes[offset + i];
     }
     return v;
 }
 
 /** @brief Reads a 64-bit big-endian field. */
-inline std::uint64_t rd64(const std::uint8_t *p) {
+inline std::uint64_t rd64(ByteView bytes, std::size_t offset) {
     std::uint64_t v = 0;
     for (int i = 0; i < 8; ++i) {
-        v = v << 8 | p[i];
+        v = v << 8 | bytes[offset + i];
     }
     return v;
 }
 
 /** @brief Returns an 8-byte ITCH stock field with its padding spaces removed. */
-inline std::string_view symbolAt(const std::uint8_t *p) {
-    std::string_view s(reinterpret_cast<const char *>(p), 8);
+inline std::string_view symbolAt(ByteView bytes, std::size_t offset) {
+    std::string_view s(reinterpret_cast<const char *>(bytes.data() + offset), StockSymbolWidth);
     const auto end = s.find_last_not_of(' ');
     return end == std::string_view::npos ? std::string_view{} : s.substr(0, end + 1);
 }
@@ -301,25 +310,26 @@ int main(int argc, char **argv) {
 
     std::uint64_t messages = 0;
     std::uint64_t rows = 0;
+    const ByteView input{base, size};
     std::size_t offset = 0;
     bool truncated = false;
 
-    while (offset + 2 <= size) {
-        const std::uint16_t length = rd16(base + offset);
-        if (length == 0 || offset + 2 + length > size) {
-            truncated = offset + 2 + length > size && length != 0;
+    while (offset + FrameLengthBytes <= input.size()) {
+        const std::uint16_t length = rd16(input, offset);
+        if (length == 0 || offset + FrameLengthBytes + length > input.size()) {
+            truncated = offset + FrameLengthBytes + length > input.size() && length != 0;
             break;
         }
-        const std::uint8_t *m = base + offset + 2;
-        offset += 2 + length;
+        const ByteView m = input.subspan(offset + FrameLengthBytes, length);
+        offset += FrameLengthBytes + length;
         ++messages;
 
         const std::uint8_t type = m[0];
-        const std::uint16_t locate = rd16(m + 1);
+        const std::uint16_t locate = rd16(m, LocateOffset);
 
         // The directory precedes the trading messages and defines the filter.
         if (type == 'R') {
-            const std::string symbol(symbolAt(m + 11));
+            const std::string symbol(symbolAt(m, 11));
             locateToSymbol.emplace(locate, symbol);
             if (filtering) {
                 if (keepLocate.size() <= locate) {
@@ -347,7 +357,7 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        const std::uint64_t nanos = rd48(m + 5);
+        const std::uint64_t nanos = rd48(m, TimestampOffset);
 
         appendUInt(buffer, ++rows);
         buffer.push_back(',');
@@ -366,11 +376,11 @@ int main(int argc, char **argv) {
 
         // symbol
         if (type == 'A' || type == 'F' || type == 'P') {
-            buffer.append(symbolAt(m + 24));
+            buffer.append(symbolAt(m, 24));
         } else if (type == 'Q') {
-            buffer.append(symbolAt(m + 19));
+            buffer.append(symbolAt(m, 19));
         } else if (type == 'H') {
-            buffer.append(symbolAt(m + 11));
+            buffer.append(symbolAt(m, 11));
         } else if (type != 'S') {
             const auto it = locateToSymbol.find(locate);
             if (it != locateToSymbol.end()) {
@@ -382,7 +392,7 @@ int main(int argc, char **argv) {
         // order_ref
         if (type == 'A' || type == 'F' || type == 'E' || type == 'C' ||
             type == 'X' || type == 'D' || type == 'U' || type == 'P') {
-            appendUInt(buffer, rd64(m + 11));
+            appendUInt(buffer, rd64(m, 11));
         }
         buffer.push_back(',');
 
@@ -394,43 +404,43 @@ int main(int argc, char **argv) {
 
         // shares
         if (type == 'A' || type == 'F' || type == 'P') {
-            appendUInt(buffer, rd32(m + 20));
+            appendUInt(buffer, rd32(m, 20));
         } else if (type == 'E' || type == 'C' || type == 'X') {
-            appendUInt(buffer, rd32(m + 19));
+            appendUInt(buffer, rd32(m, 19));
         } else if (type == 'U') {
-            appendUInt(buffer, rd32(m + 27));
+            appendUInt(buffer, rd32(m, 27));
         } else if (type == 'Q') {
-            appendUInt(buffer, rd64(m + 11));
+            appendUInt(buffer, rd64(m, 11));
         }
         buffer.push_back(',');
 
         // price
         if (type == 'A' || type == 'F' || type == 'P') {
-            appendPrice(buffer, rd32(m + 32));
+            appendPrice(buffer, rd32(m, 32));
         } else if (type == 'C') {
-            appendPrice(buffer, rd32(m + 32));
+            appendPrice(buffer, rd32(m, 32));
         } else if (type == 'U') {
-            appendPrice(buffer, rd32(m + 31));
+            appendPrice(buffer, rd32(m, 31));
         } else if (type == 'Q') {
-            appendPrice(buffer, rd32(m + 27));
+            appendPrice(buffer, rd32(m, 27));
         }
         buffer.push_back(',');
 
         // new_order_ref
         if (type == 'U') {
-            appendUInt(buffer, rd64(m + 19));
+            appendUInt(buffer, rd64(m, 19));
         }
         buffer.push_back(',');
 
         // match_number
         if (type == 'E' || type == 'C') {
-            appendUInt(buffer, rd64(m + 23));
+            appendUInt(buffer, rd64(m, 23));
         } else if (type == 'P') {
-            appendUInt(buffer, rd64(m + 36));
+            appendUInt(buffer, rd64(m, 36));
         } else if (type == 'Q') {
-            appendUInt(buffer, rd64(m + 31));
+            appendUInt(buffer, rd64(m, 31));
         } else if (type == 'B') {
-            appendUInt(buffer, rd64(m + 11));
+            appendUInt(buffer, rd64(m, 11));
         }
         buffer.push_back(',');
 
@@ -441,7 +451,7 @@ int main(int argc, char **argv) {
         }
         buffer.push_back(',');
         if (type == 'F') {
-            std::string_view mpid(reinterpret_cast<const char *>(m + 36), 4);
+            std::string_view mpid(reinterpret_cast<const char *>(m.data() + 36), 4);
             const auto end = mpid.find_last_not_of(' ');
             if (end != std::string_view::npos) {
                 buffer.append(mpid.substr(0, end + 1));

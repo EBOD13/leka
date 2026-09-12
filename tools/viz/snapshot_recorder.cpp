@@ -36,6 +36,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ranges>
 #include <deque>
 #include <stdexcept>
 #include <string>
@@ -159,7 +160,7 @@ class RollingLatency {
         std::array<std::uint64_t, 3> percentiles() const {
             if (samples.empty()) return {0, 0, 0};
             std::vector<std::uint64_t> sorted(samples.begin(), samples.end());
-            std::sort(sorted.begin(), sorted.end());
+            std::ranges::sort(sorted);
             const auto at = [&](double p) {
                 return sorted[static_cast<std::size_t>(p * (sorted.size() - 1))];
             };
