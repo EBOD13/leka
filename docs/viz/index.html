@@ -26,6 +26,24 @@
   </div>
 </header>
 
+<div class="dataset-bar">
+  <div class="dataset-group">
+    <span class="dataset-label">Symbol</span>
+    <div class="segmented" role="tablist">
+      <button class="seg active" data-symbol="aapl" role="tab">AAPL</button>
+      <button class="seg" data-symbol="intc" role="tab">INTC</button>
+      <button class="seg" data-symbol="msft" role="tab">MSFT</button>
+    </div>
+  </div>
+  <div class="dataset-group" id="modelGroup" hidden>
+    <span class="dataset-label">Model</span>
+    <div class="segmented" role="tablist">
+      <button class="seg" data-model="poisson" role="tab">Poisson</button>
+      <button class="seg active" data-model="hawkes" role="tab">Hawkes</button>
+    </div>
+  </div>
+</div>
+
 <div class="transport">
   <button id="playPause" class="play" aria-label="Play">▶</button>
   <input id="scrub" type="range" min="0" max="100" value="0" step="1" aria-label="Timeline">

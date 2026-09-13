@@ -403,3 +403,24 @@ canvas { width: 100%; display: block; }
   letter-spacing: 0.05em;
 }
 .price canvas, canvas.price { cursor: crosshair; }
+
+/* ---------- dataset picker ---------- */
+
+.dataset-bar {
+  display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+  padding: 14px 44px;
+  border-bottom: 1px solid var(--hairline);
+}
+.dataset-group { display: flex; align-items: center; gap: 12px; }
+.dataset-label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.13em;
+  color: var(--subtle-text); font-weight: 600;
+}
+/* Reuses .segmented/.seg from the masthead's mode switch, so a new symbol
+   or model reads as the same control, not a different widget. */
+.dataset-bar .segmented { padding: 2px; }
+.dataset-bar .seg { padding: 5px 13px; font-size: 12.5px; }
+
+@media (max-width: 640px) {
+  .dataset-bar { padding: 12px 22px; gap: 16px; }
+}

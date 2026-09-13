@@ -63,19 +63,34 @@ jobs:
             -DBUILD_TOOLS=ON
           cmake --build build-viz --target snapshot_recorder --parallel
 
+      # One real session and two fitted models (Poisson/CSTT baseline,
+      # Hawkes self-exciting) per symbol, three symbols -- nine snapshot
+      # files. File naming (<symbol>_<kind>.jsonl) is the contract the
+      # viewer's JS reads directly; adding a fourth symbol later is adding
+      # three lines here and three inputs under data/interchange/, no
+      # viewer change.
       - name: Record replay snapshots
         run: |
           mkdir -p docs/viz/data
-          ./build-viz/snapshot_recorder \
-            --input  data/interchange/aapl_bx_20190730_sample.csv \
-            --output docs/viz/data/real_aapl.jsonl \
-            --label  "Real — Nasdaq BX AAPL 2019-07-30" \
-            --tick   100
-          ./build-viz/snapshot_recorder \
-            --input  data/interchange/synthetic_hawkes.csv \
-            --output docs/viz/data/synth_hawkes.jsonl \
-            --label  "Synthetic — Hawkes model" \
-            --tick   100
+          declare -A LABELS=([aapl]=AAPL [intc]=INTC [msft]=MSFT)
+          for sym in aapl intc msft; do
+            NAME="${LABELS[$sym]}"
+            ./build-viz/snapshot_recorder \
+              --input  "data/interchange/${sym}_bx_20190730_sample.csv" \
+              --output "docs/viz/data/${sym}_real.jsonl" \
+              --label  "Real — Nasdaq BX ${NAME} 2019-07-30" \
+              --tick   100
+            ./build-viz/snapshot_recorder \
+              --input  "data/interchange/synthetic_poisson_${sym}.csv" \
+              --output "docs/viz/data/${sym}_poisson.jsonl" \
+              --label  "Synthetic — Poisson (${NAME})" \
+              --tick   100
+            ./build-viz/snapshot_recorder \
+              --input  "data/interchange/synthetic_hawkes_${sym}.csv" \
+              --output "docs/viz/data/${sym}_hawkes.jsonl" \
+              --label  "Synthetic — Hawkes (${NAME})" \
+              --tick   100
+          done
           ls -lh docs/viz/data
 
       # Publish both under one site: the API docs at the root, the viewer at

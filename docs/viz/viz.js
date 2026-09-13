@@ -12,10 +12,19 @@
  */
 'use strict';
 
-const DATASETS = {
-  real:  { file: 'data/real_aapl.jsonl' },
-  synth: { file: 'data/synth_hawkes.jsonl' },
-};
+// Every dataset the market simulator has produced. snapshot_recorder writes
+// one file per (symbol, kind) as data/<symbol>_<kind>.jsonl, so the naming
+// convention alone is enough to build the file list -- adding a fourth
+// symbol later is a CI change, not a viewer change.
+const SYMBOLS = [
+  { key: 'aapl', label: 'AAPL' },
+  { key: 'intc', label: 'INTC' },
+  { key: 'msft', label: 'MSFT' },
+];
+const MODELS = [
+  { key: 'poisson', label: 'Poisson' },
+  { key: 'hawkes', label: 'Hawkes' },
+];
 
 /** Prices are integers in 1/10000 units, matching lob::Price's own encoding. */
 const px = raw => raw / 10000;
@@ -25,9 +34,11 @@ const compact = n =>
   n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' :
   n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n);
 
+/** @param key e.g. "aapl_real", "msft_hawkes" -- matches the recorder's own file naming. */
 async function loadDataset(key) {
-  const res = await fetch(DATASETS[key].file);
-  if (!res.ok) throw new Error(`cannot load ${DATASETS[key].file} (${res.status})`);
+  const file = `data/${key}.jsonl`;
+  const res = await fetch(file);
+  if (!res.ok) throw new Error(`cannot load ${file} (${res.status})`);
   const lines = (await res.text()).split('\n').filter(Boolean);
   return { meta: JSON.parse(lines[0]), frames: lines.slice(1).map(JSON.parse) };
 }
@@ -558,17 +569,33 @@ const cache = {};
 let panels = [], frameCount = 0, cursor = 0;
 let playing = false, raf = null, acc = 0, lastT = 0;
 
+// The three controls a viewer sets: which side(s) to show, which symbol,
+// and -- since the simulator fits two different arrival models -- which one
+// to compare the real session against. All three are independent, so
+// switching symbol mid-comparison keeps the mode and model as they were.
+const state = { mode: 'real', symbol: 'aapl', model: 'hawkes' };
+
+/** Dataset keys for the current state: one for a single side, two to compare. */
+function keysFor() {
+  const real = `${state.symbol}_real`;
+  const synth = `${state.symbol}_${state.model}`;
+  if (state.mode === 'real') return [real];
+  if (state.mode === 'synth') return [synth];
+  return [real, synth];
+}
+
 async function get(key) {
   if (!cache[key]) cache[key] = await loadDataset(key);
   return cache[key];
 }
 
-async function setMode(mode) {
+async function refresh() {
   stop();
+  const mode = state.mode;
   panelsEl.classList.toggle('dual', mode === 'both');
   panelsEl.innerHTML = '<div class="loading">loading snapshots…</div>';
 
-  const keys = mode === 'both' ? ['real', 'synth'] : [mode];
+  const keys = keysFor();
   let datasets;
   try {
     datasets = await Promise.all(keys.map(get));
@@ -586,11 +613,14 @@ async function setMode(mode) {
   // two order books is only intuitive if the reader knows which difference
   // is the interesting one.
   if (mode === 'both') {
+    const modelLabel = MODELS.find(m => m.key === state.model).label;
+    const symbolLabel = SYMBOLS.find(s => s.key === state.symbol).label;
     const note = document.createElement('p');
     note.className = 'compare-note';
     note.innerHTML =
-      '<b>Same cursor, two books.</b> Left is a real Nasdaq BX session; right is ' +
-      'synthetic flow from the Hawkes model, replayed through the same engine. ' +
+      `<b>Same cursor, two books.</b> Left is the real ${symbolLabel} Nasdaq BX ` +
+      `session; right is synthetic ${symbolLabel} flow from the ${modelLabel} model, ` +
+      'replayed through the same engine. ' +
       '<span class="hint">Watch the tape and the depth chart: the synthetic book ' +
       'trades far less often than the real one, which is the calibration gap the ' +
       'simulator&rsquo;s KS tests measure numerically.</span>';
@@ -673,13 +703,30 @@ function stop() {
 playBtn.addEventListener('click', () => (playing ? stop() : play()));
 scrub.addEventListener('input', e => { stop(); seek(Number(e.target.value)); });
 
-document.querySelectorAll('.seg').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.seg').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    setMode(btn.dataset.mode);
+// Each .segmented group manages its own active state independently -- the
+// mode, symbol, and model controls must not clear each other's selection,
+// so "clear active" is scoped to buttons within the clicked button's own
+// group rather than every .seg on the page.
+document.querySelectorAll('.segmented').forEach(group => {
+  group.querySelectorAll('.seg').forEach(btn => {
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('.seg').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.mode) state.mode = btn.dataset.mode;
+      if (btn.dataset.symbol) state.symbol = btn.dataset.symbol;
+      if (btn.dataset.model) state.model = btn.dataset.model;
+      updateModelVisibility();
+      refresh();
+    });
   });
 });
+
+/** The model choice (Poisson/Hawkes) only means anything once a synthetic
+ *  side is on screen -- hidden in Real mode rather than shown and inert. */
+function updateModelVisibility() {
+  const modelGroup = document.getElementById('modelGroup');
+  if (modelGroup) modelGroup.hidden = state.mode === 'real';
+}
 
 const themeToggle = document.getElementById('themeToggle');
 if (localStorage.getItem('leka-theme') === 'light') {
@@ -703,4 +750,5 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(() => seek(cursor), 120);
 });
 
-setMode('real');
+updateModelVisibility();
+refresh();
